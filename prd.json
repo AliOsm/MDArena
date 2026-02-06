@@ -558,8 +558,8 @@
         "Typecheck passes"
       ],
       "priority": 33,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "DocumentChannel subscribes with project_id and file_path params. Rejects if user is not a project member. Loads Y.js state from Rails.cache (memory_store in test, solid_cache in prod) or initializes from Git content. Transmits Base64-encoded Y.js state as sync message. Cache key: ydoc:<project_id>:<file_path> with 2-hour TTL. Changed test env cache_store from :null_store to :memory_store for cache operations. Ruby 3.4: transmit({hash}) requires explicit hash (not keyword args) due to strict kwarg separation."
     },
     {
       "id": "US-034",

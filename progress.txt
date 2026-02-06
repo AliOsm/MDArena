@@ -495,4 +495,22 @@
   - ActionCable Connection's `connect` method must be public — the test framework checks `respond_to?(:connect)` which only matches public methods; if private, it silently skips calling connect
   - Ruby 3.4 requires explicit `require "ostruct"` for OpenStruct — use `Struct.new(:user)` instead for warden mocking in connection tests
   - When switching from flat to multi-db database.yml, test databases need `db:prepare` to re-initialize
+- Ruby 3.4: ActionCable `transmit` requires explicit hash `transmit({key: val})` — passing `transmit(key: val)` treats it as keyword args and raises `ArgumentError: wrong number of arguments`
+- y-rb API: `Y::Doc.new`, `doc.get_text('name')`, `text.insert(0, str)`, `doc.full_diff` returns Array of bytes, `doc.sync(bytes_array)` applies state; pack/unpack with `"C*"` for Base64 encoding
+- Test env cache: changed from `:null_store` to `:memory_store` — `:null_store` silently discards all cache reads/writes, breaking any feature that relies on `Rails.cache`
+---
+
+## 2026-02-06 - US-033
+- What was implemented: DocumentChannel with subscribe logic that loads/initializes Y.js document state and transmits to client
+- Files changed:
+  - app/channels/document_channel.rb (created; subscribes with project_id/file_path, rejects non-members, loads/inits Y.js state from cache or Git, transmits Base64-encoded sync message, streams from document:<project_id>:<file_path>)
+  - config/environments/test.rb (changed cache_store from :null_store to :memory_store for cache operations in tests)
+  - test/channels/document_channel_test.rb (created; 7 tests: subscribe success, reject non-member, reject invalid project, transmit sync state, empty ydoc for missing file, cache with TTL, cached state on subsequent subscriptions)
+  - prd.json (marked US-033 as passes: true)
+- **Learnings for future iterations:**
+  - ActionCable `transmit` method signature is `transmit(data, via:)` — the first arg is positional. In Ruby 3.4, passing `transmit(type: "sync", state: encoded)` is treated as keyword args and raises ArgumentError. Must use `transmit({type: "sync", state: encoded})` with explicit hash.
+  - y-rb gem API: `doc.full_diff` returns an Array of byte integers, `doc.sync(byte_array)` applies state. Use `.pack("C*")` / `.unpack("C*")` for Base64 encoding/decoding.
+  - Test env `:null_store` cache silently discards writes — switch to `:memory_store` when features depend on `Rails.cache.read`/`write`
+  - Channel test pattern: `stub_connection current_user: user` + `subscribe(params)` + check `subscription.confirmed?` / `subscription.rejected?` + `transmissions.last` for transmitted data
+  - `Project#users` association checks membership efficiently — use `.include?(current_user)` for membership verification in channels
 ---
