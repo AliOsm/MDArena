@@ -35,5 +35,11 @@ Rails.application.routes.draw do
     resources :tokens, only: [ :index, :create, :destroy ]
   end
 
+  namespace :api do
+    namespace :git do
+      get "authorize", to: "authorize#show"
+    end
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 end
