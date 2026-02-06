@@ -1,8 +1,50 @@
 <script setup>
+import { onMounted, onBeforeUnmount } from "vue"
 import { router, usePage } from "@inertiajs/vue3"
+import { createConsumer } from "@rails/actioncable"
 
+const toast = useToast()
 const page = usePage()
 const currentUser = page.props.currentUser
+
+let consumer = null
+let subscription = null
+
+onMounted(() => {
+  if (!currentUser?.id) return
+
+  consumer = createConsumer()
+  subscription = consumer.subscriptions.create("UserNotificationsChannel", {
+    received(data) {
+      if (data.type === "pdf_ready") {
+        toast.add({
+          title: "PDF Ready",
+          description: `${data.filename} is ready for download.`,
+          color: "success",
+          actions: [
+            {
+              label: "Download",
+              click: () => {
+                window.location.href = data.download_url
+              },
+            },
+          ],
+        })
+      }
+    },
+  })
+})
+
+onBeforeUnmount(() => {
+  if (subscription) {
+    subscription.unsubscribe()
+    subscription = null
+  }
+  if (consumer) {
+    consumer.disconnect()
+    consumer = null
+  }
+})
 
 function logout() {
   router.delete("/logout")

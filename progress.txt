@@ -61,6 +61,7 @@
 - Grover stubbing without mocha: `Grover.define_singleton_method(:new) { |*_| OpenStruct.new(to_pdf: fake) }` with restore in `ensure`
 - API controllers for external auth: `skip_before_action :authenticate_user!` and `skip_before_action :verify_authenticity_token` — CSRF protection breaks non-browser requests
 - `PersonalAccessToken.authenticate` returns the PAT; verify `pat.user_id == user.id` to ensure token belongs to the claimed user
+- ActionCable test `assert_no_streams` takes ZERO arguments — it checks for no streams at all; use `assert_has_stream "name"` for positive stream checks only
 
 ---
 
@@ -660,4 +661,20 @@
   - `ActiveStorage::Blob.create_and_upload!` creates and stores a blob in one call — use `StringIO.new(data)` as the io param
   - `rails_blob_path(blob, disposition: "attachment", only_path: true)` generates a relative download URL for Active Storage blobs
   - Active Storage needs `rails active_storage:install` to create migrations for blobs/attachments/variants tables
+---
+
+## 2026-02-06 - US-044
+- What was implemented: UserNotificationsChannel for authenticated user notification streaming, and AppLayout.vue subscription for PDF ready toast notifications with download link
+- Files changed:
+  - app/channels/user_notifications_channel.rb (created; streams from user:<id>:notifications for authenticated users)
+  - app/javascript/layouts/AppLayout.vue (updated; subscribes to UserNotificationsChannel on mount via createConsumer, shows success toast with Download action on pdf_ready, unsubscribes on unmount)
+  - test/channels/user_notifications_channel_test.rb (created; 2 tests: subscription + streaming, user scoping)
+  - prd.json (marked US-044 as passes: true)
+- **Learnings for future iterations:**
+  - UserNotificationsChannel is minimal — just `stream_from "user:#{current_user.id}:notifications"` — authentication is handled by ApplicationCable::Connection
+  - `useToast()` is auto-imported by Nuxt UI — no explicit import needed, available directly in `<script setup>`
+  - Action Cable `createConsumer()` connects to default `/cable` endpoint — no URL configuration needed
+  - Toast `actions` array supports `{ label, click }` objects for interactive notifications — use `window.location.href = url` for file downloads
+  - `assert_no_streams` in ActionCable channel tests takes NO arguments — it checks there are no streams at all; use `assert_has_stream` for positive checks only
+  - Guard `onMounted` with `if (!currentUser?.id) return` to avoid creating subscriptions when user data is not available (e.g., auth pages)
 ---

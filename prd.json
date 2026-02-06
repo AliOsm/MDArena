@@ -748,8 +748,8 @@
         "Typecheck passes"
       ],
       "priority": 44,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "UserNotificationsChannel streams from user:<id>:notifications for authenticated users. AppLayout.vue subscribes via createConsumer on mount, shows success toast with Download action button on pdf_ready messages. Unsubscribes and disconnects consumer on unmount. 2 channel tests covering subscription and user scoping."
     },
     {
       "id": "US-045",
