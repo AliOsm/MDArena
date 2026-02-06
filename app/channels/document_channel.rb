@@ -1,4 +1,6 @@
 class DocumentChannel < ApplicationCable::Channel
+  periodically :check_head_changed, every: 10.seconds
+
   def subscribed
     @project = Project.find_by(id: params[:project_id])
 
@@ -10,6 +12,8 @@ class DocumentChannel < ApplicationCable::Channel
     @file_path = params[:file_path]
     @stream_name = "document:#{@project.id}:#{@file_path}"
     @cache_key = "ydoc:#{@project.id}:#{@file_path}"
+
+    @last_known_head = GitService.head_sha(@project)
 
     stream_from @stream_name
     register_active_ydoc
@@ -33,6 +37,16 @@ class DocumentChannel < ApplicationCable::Channel
 
     deregister_active_ydoc
     FlushYdocToGitJob.set(wait: 5.seconds).perform_later(@project.id, @file_path)
+  end
+
+  def check_head_changed
+    return unless @project
+
+    current_head = GitService.head_sha(@project)
+    return if current_head.nil? || current_head == @last_known_head
+
+    @last_known_head = current_head
+    ActionCable.server.broadcast(@stream_name, { type: "file_changed" })
   end
 
   private

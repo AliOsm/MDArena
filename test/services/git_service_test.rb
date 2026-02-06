@@ -208,6 +208,19 @@ class GitServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "head_sha returns HEAD commit SHA" do
+    GitService.init_repo(@project)
+    sha = GitService.commit_file(project: @project, path: "README.md", content: "v1", user: @user, message: "v1")
+
+    assert_equal sha, GitService.head_sha(@project)
+  end
+
+  test "head_sha returns nil for empty repo" do
+    GitService.init_repo(@project)
+
+    assert_nil GitService.head_sha(@project)
+  end
+
   test "file_content_at raises FileNotFoundError for invalid sha" do
     GitService.init_repo(@project)
     GitService.commit_file(project: @project, path: "README.md", content: "v1", user: @user, message: "v1")

@@ -182,4 +182,29 @@ class DocumentChannelTest < ActionCable::Channel::TestCase
       unsubscribe
     end
   end
+
+  test "check_head_changed broadcasts file_changed when HEAD changes" do
+    subscribe(project_id: @project.id, file_path: @file_path)
+
+    # Simulate an external Git push by committing a new file
+    GitService.commit_file(
+      project: @project,
+      path: @file_path,
+      content: "# Changed externally",
+      user: @user,
+      message: "External push"
+    )
+
+    assert_broadcast_on("document:#{@project.id}:#{@file_path}", { type: "file_changed" }) do
+      subscription.check_head_changed
+    end
+  end
+
+  test "check_head_changed does not broadcast when HEAD unchanged" do
+    subscribe(project_id: @project.id, file_path: @file_path)
+
+    assert_no_broadcasts("document:#{@project.id}:#{@file_path}") do
+      subscription.check_head_changed
+    end
+  end
 end

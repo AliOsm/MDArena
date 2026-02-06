@@ -24,6 +24,7 @@ const showPreview = ref(false)
 const saving = ref(false)
 const connectionStatus = ref("connecting")
 const editorContent = ref(initialContent || "")
+const fileChangedExternally = ref(false)
 
 // Y.js setup
 const ydoc = new Y.Doc()
@@ -120,6 +121,14 @@ onMounted(() => {
               "remote",
             )
           }
+        } else if (data.type === "file_changed") {
+          fileChangedExternally.value = true
+          toast.add({
+            title: "File changed externally",
+            description:
+              "This file was changed outside the editor. Please refresh to get the latest version.",
+            color: "warning",
+          })
         }
       },
     },
@@ -165,6 +174,23 @@ function save() {
       </div>
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ path }}</h1>
     </div>
+
+    <UAlert
+      v-if="fileChangedExternally"
+      color="warning"
+      icon="i-lucide-alert-triangle"
+      title="This file was changed outside the editor. Please refresh to get the latest version."
+      class="mb-4"
+    >
+      <template #actions>
+        <UButton
+          label="Refresh"
+          color="warning"
+          variant="soft"
+          @click="router.visit(`/projects/${project.slug}/files/${path}/edit`)"
+        />
+      </template>
+    </UAlert>
 
     <div class="mb-4 flex flex-wrap items-center gap-2">
       <UButton icon="i-lucide-save" label="Save" :loading="saving" @click="save" />

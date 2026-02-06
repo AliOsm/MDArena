@@ -147,6 +147,13 @@ class GitService
     raise FileNotFoundError, "Commit not found: #{sha}"
   end
 
+  def self.head_sha(project)
+    repo = Rugged::Repository.new(repo_path(project))
+    repo.references["refs/heads/main"]&.target&.oid
+  rescue Rugged::RepositoryError
+    nil
+  end
+
   def self.resolve_commit(repo, ref)
     if ref == "HEAD"
       repo.references["refs/heads/main"]&.target || repo.head.target
