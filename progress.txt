@@ -44,6 +44,7 @@
 - File routes with `.md` extensions need glob `*path` with `format: false` + `defaults: { format: :html }` to prevent Rails from treating `.md` as request format
 - Route helper convention for nested file routes: `project_file_path`, `project_edit_file_path`, `project_destroy_file_path` (not `edit_project_file_path`)
 - `rescue_from GitService::FileNotFoundError` with `raise ActiveRecord::RecordNotFound` to return proper 404 responses
+- CodeMirror 6: use `shallowRef` for EditorView, initialize in `onMounted`, use `v-show` (not `v-if`) to preserve editor when toggling views
 
 ---
 
@@ -402,4 +403,18 @@
   - `useToast()` is auto-imported by Nuxt UI unplugin — no explicit import needed in `<script setup>`
   - Download PDF uses `router.post` with `preserveScroll: true` to avoid page jump, then shows success toast on `onSuccess` callback
   - Route pattern for file actions: `/projects/${project.slug}/files/${path}/<action>` — matches the glob route definitions in routes.rb
+---
+
+## 2026-02-06 - US-027
+- What was implemented: Markdown editor page with CodeMirror 6 (Files/Edit.vue)
+- Files changed:
+  - app/javascript/pages/Files/Edit.vue (created; CodeMirror 6 editor with basicSetup + markdown(), Save button with Inertia PATCH, connection status badge, toggle preview)
+  - prd.json (marked US-027 as passes: true)
+- **Learnings for future iterations:**
+  - CodeMirror 6 must be initialized in `onMounted` — the DOM ref isn't available during setup
+  - Use `shallowRef` for EditorView (not `ref`) to avoid Vue reactivity proxy wrapping the complex CM object
+  - `EditorView.updateListener.of()` is the CM6 way to listen for doc changes — fires on every transaction
+  - `v-show` is better than `v-if` for toggling editor/preview — `v-if` would destroy and recreate the CM editor
+  - CM editor styling: use `[&_.cm-editor]` Tailwind arbitrary selector to target the inner editor element for min-height/outline
+  - `router.patch` requires the content as a plain object param, not FormData — Inertia handles serialization
 ---

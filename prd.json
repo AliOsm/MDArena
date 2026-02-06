@@ -458,8 +458,8 @@
         "Typecheck passes"
       ],
       "priority": 27,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Files/Edit.vue with CodeMirror 6 editor (basicSetup + markdown() extension), Save button via router.patch with commit_message and base_commit_sha, connection status UBadge (success/error), toggle between editor and MarkdownPreview. Editor fills space with min-h-[60vh]. EditorView.updateListener syncs content for live preview."
     },
     {
       "id": "US-028",
