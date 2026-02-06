@@ -5,8 +5,8 @@
   "packageManager": "yarn@4.12.0",
   "scripts": {
     "lint": "oxlint ./app/javascript",
-    "format": "oxfmt --write 'app/javascript/**/*.{vue,js,ts}'",
-    "format:check": "oxfmt --check 'app/javascript/**/*.{vue,js,ts}'"
+    "format": "oxfmt --write app/javascript",
+    "format:check": "oxfmt --check app/javascript"
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.3.2",

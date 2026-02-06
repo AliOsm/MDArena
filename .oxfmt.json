@@ -1,0 +1,12 @@
+{
+  "printWidth": 100,
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "plugins": {
+    "tailwindcss": {
+      "classAttributes": ["class", "className"],
+      "functions": ["cn", "clsx", "tw"]
+    }
+  }
+}

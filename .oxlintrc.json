@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "warn",
+    "eqeqeq": "error"
+  },
+  "ignorePatterns": ["node_modules", "public", "tmp"]
+}
