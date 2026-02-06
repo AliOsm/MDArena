@@ -335,3 +335,14 @@
   - `assert_difference(["Project.count", "ProjectMembership.count"], 1)` checks multiple counters in one assertion — keeps within Minitest/MultipleAssertions max of 3
   - Compare hashes in a single assertion to verify multiple attributes without exceeding assertion limits: `assert_equal({ key1: val1, key2: val2 }, { key1: actual1, key2: actual2 })`
 ---
+
+## 2026-02-06 - US-022
+- What was implemented: Projects index page UI with project cards grid, create modal, and empty state
+- Files changed:
+  - app/javascript/pages/Projects/Index.vue (created; UCard grid with hover:ring-2 transition, role UBadge, owner name, updated_at; UAlert empty state with folder-plus icon; UModal for project creation with UFormField + UInput; router.post submission)
+  - prd.json (marked US-022 as passes: true)
+- **Learnings for future iterations:**
+  - UCard component renders clickable project cards — use `@click` with `router.visit()` for Inertia navigation
+  - Grid layout with `sm:grid-cols-2 lg:grid-cols-3` provides responsive card layout
+  - Follow same modal/form pattern from Tokens.vue: ref for modal open state, ref for form value, ref for loading state, `onFinish` callback to reset
+---
