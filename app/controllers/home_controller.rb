@@ -1,5 +1,5 @@
 class HomeController < ApplicationController
   def index
-    head :ok
+    render inertia: "Home"
   end
 end

@@ -2,6 +2,8 @@
 import { ref } from "vue"
 import { router, usePage } from "@inertiajs/vue3"
 
+defineOptions({ layout: false })
+
 const page = usePage()
 const form = ref({
   email: "",
