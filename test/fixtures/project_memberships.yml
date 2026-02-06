@@ -1,0 +1,14 @@
+alice_alpha_owner:
+  user: alice
+  project: alpha
+  role: owner
+
+bob_alpha_editor:
+  user: bob
+  project: alpha
+  role: editor
+
+bob_beta_owner:
+  user: bob
+  project: beta
+  role: owner

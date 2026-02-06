@@ -47,4 +47,17 @@ class UserTest < ActiveSupport::TestCase
 
     assert_equal expected, expected & User.devise_modules
   end
+
+  test "has many owned_projects" do
+    assert_includes users(:alice).owned_projects, projects(:alpha)
+  end
+
+  test "has many projects through memberships" do
+    assert_includes users(:bob).projects, projects(:alpha)
+    assert_includes users(:bob).projects, projects(:beta)
+  end
+
+  test "has many memberships" do
+    assert_equal 2, users(:bob).memberships.count
+  end
 end
