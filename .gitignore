@@ -496,6 +496,10 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/ruby,linux,macos,rails,dotenv,windows,rubymine,rubymine+all,rubymine+iml,yarn
 
+# Nuxt UI / Vite auto-generated type declarations
+app/javascript/auto-imports.d.ts
+app/javascript/components.d.ts
+
 # Vite Ruby
 /public/vite*
 node_modules
