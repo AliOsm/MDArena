@@ -1,0 +1,50 @@
+class ProjectsController < ApplicationController
+  before_action :set_project, only: :show
+
+  def index
+    projects = current_user.projects.includes(:owner).order(updated_at: :desc)
+    render inertia: "Projects/Index", props: {
+      projects: projects.map { |p| serialize_project(p) }
+    }
+  end
+
+  def show
+    files = GitService.list_files(@project)
+    render inertia: "Projects/Show", props: {
+      project: serialize_project(@project),
+      files: files
+    }
+  end
+
+  def create
+    project = Project.new(name: params[:name], slug: params[:name].to_s.parameterize, owner: current_user)
+
+    if project.save
+      ProjectMembership.create!(user: current_user, project: project, role: "owner")
+      GitService.init_repo(project)
+      redirect_to project_path(project.slug), notice: "Project created."
+    else
+      redirect_back fallback_location: projects_path, inertia: { errors: project.errors.to_hash }
+    end
+  end
+
+  private
+
+  def set_project
+    @project = current_user.projects.find_by!(slug: params[:slug])
+  end
+
+  def serialize_project(project)
+    membership = project.memberships.find_by(user: current_user)
+    {
+      id: project.id,
+      name: project.name,
+      slug: project.slug,
+      uuid: project.uuid,
+      role: membership&.role,
+      ownerName: project.owner.name,
+      updatedAt: project.updated_at,
+      cloneUrl: "/git/#{project.slug}.git"
+    }
+  end
+end

@@ -352,8 +352,8 @@
         "Typecheck passes"
       ],
       "priority": 21,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "ProjectsController with index (user's projects ordered by updated_at desc), show (scoped to user's projects by slug, files from GitService), create (slug from parameterize, init git repo, create owner membership). Routes: GET /projects, GET /projects/:slug, POST /projects. 8 integration tests all passing."
     },
     {
       "id": "US-022",

@@ -303,6 +303,7 @@
   - `Rugged::TreeError` is raised when `tree.path(path)` can't find a file — catch it for FileNotFoundError
   - `Rugged::ReferenceError` is raised when accessing HEAD on an empty repo (no commits yet)
   - Parallel test execution can cause segfaults with Rugged — run with `PARALLEL_WORKERS=1` if crashes occur
+- Project routes use `param: :slug` — access via `params[:slug]`; scope to `current_user.projects.find_by!(slug:)` for member-only access
   - File locking via `File.flock(File::LOCK_EX)` on a `.lock` file provides exclusive access for concurrent write protection
   - `Rugged::Walker` with `SORT_TOPO | SORT_DATE` walks commits in topological+date order — use `push(oid)` to start from HEAD
   - Filter file history by comparing blob OID at path between commit and parent — handles both creation (parent has nil OID) and modification
@@ -319,4 +320,18 @@
   - `blob_oid_at` helper catches `Rugged::TreeError` and returns nil for files not present in a tree — useful for history filtering
   - `Rugged::OdbError` is raised when looking up a nonexistent SHA — catch it alongside `Rugged::InvalidError` for robust error handling
   - Rubocop `Minitest/MultipleAssertions` max is 3 — compare hashes in a single assertion instead of asserting individual fields
+---
+
+## 2026-02-06 - US-021
+- What was implemented: ProjectsController with index, show, and create actions for project management
+- Files changed:
+  - app/controllers/projects_controller.rb (created; index with user's projects, show with files from GitService, create with slug/git repo/membership setup)
+  - config/routes.rb (added resources :projects with index/create and show via member route with slug param)
+  - test/controllers/projects_controller_test.rb (created; 8 tests: index, member scoping, show, 404 for non-member, create + redirect, create attributes/git repo, blank name, auth guard)
+  - prd.json (marked US-021 as passes: true)
+- **Learnings for future iterations:**
+  - `resources :projects, param: :slug` with `member { get "/", action: :show }` generates clean routes: GET /projects/:slug maps to show, with `params[:slug]`
+  - `current_user.projects.find_by!(slug: params[:slug])` scopes project access to the current user's memberships — raises RecordNotFound (404) for non-members
+  - `assert_difference(["Project.count", "ProjectMembership.count"], 1)` checks multiple counters in one assertion — keeps within Minitest/MultipleAssertions max of 3
+  - Compare hashes in a single assertion to verify multiple attributes without exceeding assertion limits: `assert_equal({ key1: val1, key2: val2 }, { key1: actual1, key2: actual2 })`
 ---

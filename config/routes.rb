@@ -9,6 +9,12 @@ Rails.application.routes.draw do
 
   root "home#index"
 
+  resources :projects, only: [ :index, :create ], param: :slug do
+    member do
+      get "/", action: :show
+    end
+  end
+
   namespace :settings do
     resources :tokens, only: [ :index, :create, :destroy ]
   end
