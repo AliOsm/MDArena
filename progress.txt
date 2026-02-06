@@ -576,3 +576,14 @@
   - Save via Action Cable (`subscription.send({ type: "save" })`) is simpler than Inertia `router.patch` — the FlushYdocToGitJob handles the actual Git commit from the cached Y.js state
   - yCollab returns an array of extensions (ySync, yUndoManager, etc.) — spread or pass directly as an extensions array element
 ---
+
+## 2026-02-06 - US-038
+- What was implemented: Auto-save timer in collaborative editor — debounced 60-second inactivity timer that triggers save via Action Cable
+- Files changed:
+  - app/javascript/pages/Files/Edit.vue (added autoSaveTimer, resetAutoSaveTimer, clearAutoSaveTimer functions; reset on local Y.Doc updates; clear on unmount; neutral toast on auto-save)
+- **Learnings for future iterations:**
+  - Auto-save timer only resets on local edits (origin !== "remote") — remote updates from collaborators don't trigger auto-save for the current user
+  - Use `let` for timer variable (not `ref`) since it doesn't need Vue reactivity — `setTimeout` IDs are just numbers used with `clearTimeout`
+  - `toast.add({ title: "Auto-saved", color: "neutral" })` provides subtle feedback that doesn't draw attention away from editing
+  - Clear timer in `onBeforeUnmount` BEFORE unsubscribing from the channel — if the timer fires during teardown, the subscription would already be null
+---
