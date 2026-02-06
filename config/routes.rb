@@ -34,8 +34,10 @@ Rails.application.routes.draw do
   end
 
   namespace :settings do
+    resource :profile, only: [ :show, :update ], controller: "profile"
     resources :tokens, only: [ :index, :create, :destroy ]
   end
+  get "settings", to: redirect("/settings/profile")
 
   namespace :api do
     namespace :git do

@@ -801,8 +801,8 @@
         "Typecheck passes"
       ],
       "priority": 47,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "ProjectsController#settings renders Projects/Settings Inertia page with members list, owner-only via require_owner before_action. ProjectMembershipsController handles add (POST by email) and remove (DELETE) scoped to owner role. Settings button on Projects/Show.vue visible only to owners. Routes: GET /projects/:slug/settings, POST/DELETE /projects/:slug/memberships. 13 tests covering add member, remove member, self-removal blocked, owner-only access, non-member 404, auth guard."
     },
     {
       "id": "US-048",
@@ -819,8 +819,8 @@
         "Typecheck passes"
       ],
       "priority": 48,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Settings::ProfileController with show/update actions under /settings/profile. Update without password uses update (no current_password required). Update with password change uses update_with_password requiring current_password. bypass_sign_in after update to keep session valid. Settings/Profile.vue with name, email fields and password change section. GET /settings redirects to /settings/profile. 9 tests covering show, name update, email update, password change (with/without current_password), mismatched confirmation, blank name, redirect, and auth guard."
     },
     {
       "id": "US-049",

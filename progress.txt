@@ -63,6 +63,9 @@
 - `PersonalAccessToken.authenticate` returns the PAT; verify `pat.user_id == user.id` to ensure token belongs to the claimed user
 - ActionCable test `assert_no_streams` takes ZERO arguments — it checks for no streams at all; use `assert_has_stream "name"` for positive stream checks only
 - ActionCable has no public API for subscriber introspection — use cache-based registry (Set stored at `active_ydocs` key) to track active document subscriptions; maintain `all_ydoc_keys` Set for key enumeration since Solid Cache doesn't support pattern matching
+- Route helper for member routes: `<action>_<resource>_path` (e.g., `settings_project_path(slug)`) — not `<resource>_<action>_path`
+- Singular `resource :profile` routes to `ProfilesController` by default — add `controller: "profile"` to use `ProfileController`
+- Devise `update_with_password` for password changes, plain `update` for non-password attribute changes; call `bypass_sign_in` after password update
 
 ---
 
@@ -704,4 +707,36 @@
   - Solid Cache doesn't support pattern enumeration (delete_matched) — need explicit key registry (all_ydoc_keys Set) to track known ydoc cache keys
   - Test data for Y.js cache entries must be valid Y::Doc state (use doc.full_diff) — arbitrary byte arrays cause "cannot decode update: EndOfBuffer" errors in FlushYdocToGitJob
   - DocumentChannel subscribe/unsubscribe lifecycle hooks are the right place to maintain the active ydocs registry
+---
+
+## 2026-02-06 - US-047
+- What was implemented: Project settings page for member management — owner-only settings page with member table, add/remove member functionality
+- Files changed:
+  - app/controllers/projects_controller.rb (added settings action with require_owner, serialize_membership helper)
+  - app/controllers/project_memberships_controller.rb (created; add member by email with POST, remove member with DELETE, owner-only access)
+  - app/javascript/pages/Projects/Settings.vue (created; UTable with Name/Email/Role/Remove columns, Add Member form with email UInput and role USelect)
+  - app/javascript/pages/Projects/Show.vue (added Settings button for owners)
+  - config/routes.rb (added settings member route and memberships resource under projects)
+  - test/controllers/project_settings_test.rb (created; 4 tests: owner access, non-owner redirect, non-member 404, auth guard)
+  - test/controllers/project_memberships_controller_test.rb (created; 9 tests: add member, add owner, unknown email, duplicate, remove, self-removal blocked, non-owner create/destroy, auth guard)
+- **Learnings for future iterations:**
+  - Route helper for member settings action is `settings_project_path(slug)` (not `project_settings_path`) — Rails names member routes as `<action>_<resource>_path`
+  - `resources :memberships, controller: "project_memberships"` inside projects block generates `project_memberships_path(project_slug)` and `project_membership_path(project_slug, id)`
+  - Owner-only access pattern: `before_action :require_owner` checks membership role, redirects non-owners with alert
+  - Self-removal prevention: check `membership.user_id == current_user.id` before allowing delete
+---
+
+## 2026-02-06 - US-048
+- What was implemented: User settings/profile page for changing name, email, and password
+- Files changed:
+  - app/controllers/settings/profile_controller.rb (created; show renders Settings/Profile Inertia page, update handles name/email change without password and password change with current_password via Devise update_with_password, bypass_sign_in after update)
+  - app/javascript/pages/Settings/Profile.vue (created; name/email fields, password change section with current/new/confirm fields, inline validation errors, success toast)
+  - config/routes.rb (added resource :profile under settings namespace with controller: "profile", added GET /settings redirect to /settings/profile)
+  - test/controllers/settings/profile_controller_test.rb (created; 9 tests: show, name update, email update, password change requires current_password, password change succeeds, mismatched confirmation, blank name, settings redirect, auth guard)
+  - prd.json (marked US-048 as passes: true)
+- **Learnings for future iterations:**
+  - `resource :profile` (singular) routes to `ProfilesController` by default — must specify `controller: "profile"` to route to `ProfileController`
+  - Devise `update_with_password` requires `current_password` param — use `update` (without password) for name/email-only changes
+  - `bypass_sign_in(current_user)` after password change keeps the session valid — without it, user is logged out
+  - Inertia error sharing: `redirect_to path, inertia: { errors: user.errors.to_hash(true) }` stores errors for next page render
 ---
