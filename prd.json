@@ -611,8 +611,8 @@
         "Typecheck passes"
       ],
       "priority": 36,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Files/Edit.vue creates Y.Doc on mount with getText('content') and UndoManager. Action Cable subscription to DocumentChannel with project_id and file_path. On 'sync' message: applies Base64-decoded state to Y.Doc, sets status to 'connected'. On 'update' from other users (sender !== currentUserId): applies update with 'remote' origin via Y.transact. Local Y.Doc updates (origin !== 'remote') sent as Base64-encoded update messages. Connection status ref transitions between 'connecting', 'connected', 'disconnected'. On unmount: unsubscribes from channel, disconnects consumer, destroys Y.Doc. Added project.id to serialize_project for channel subscription."
     },
     {
       "id": "US-037",
@@ -627,8 +627,8 @@
         "Typecheck passes"
       ],
       "priority": 37,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "CodeMirror 6 editor uses yCollab(ytext, null, { undoManager }) extension for collaborative editing alongside basicSetup and markdown(). Save button sends { type: 'save' } to the Action Cable channel and shows a toast via useToast(). Connection status UBadge shows current status with success/error color. yCollab manages document sync between Y.Text and CodeMirror state, replacing manual EditorView.updateListener."
     },
     {
       "id": "US-038",

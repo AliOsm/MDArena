@@ -4,6 +4,7 @@ import { usePage, router } from "@inertiajs/vue3"
 import { EditorState } from "@codemirror/state"
 import { EditorView, basicSetup } from "codemirror"
 import { markdown } from "@codemirror/lang-markdown"
+import { yCollab } from "y-codemirror.next"
 import * as Y from "yjs"
 import { createConsumer } from "@rails/actioncable"
 import MarkdownPreview from "@/components/MarkdownPreview.vue"
@@ -60,18 +61,10 @@ ydoc.on("update", (update, origin) => {
 })
 
 onMounted(() => {
-  // Initialize CodeMirror with basic setup (yCollab integration comes in US-037)
+  // Initialize CodeMirror with yCollab for real-time collaborative editing
   const state = EditorState.create({
     doc: initialContent || "",
-    extensions: [
-      basicSetup,
-      markdown(),
-      EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
-          editorContent.value = update.state.doc.toString()
-        }
-      }),
-    ],
+    extensions: [basicSetup, markdown(), yCollab(ytext, null, { undoManager })],
   })
 
   editorView.value = new EditorView({
@@ -97,9 +90,13 @@ onMounted(() => {
           connectionStatus.value = "connected"
         } else if (data.type === "update") {
           if (String(data.sender) !== String(currentUserId)) {
-            Y.transact(ydoc, () => {
-              applyRemoteUpdate(data.update)
-            }, "remote")
+            Y.transact(
+              ydoc,
+              () => {
+                applyRemoteUpdate(data.update)
+              },
+              "remote",
+            )
           }
         }
       },
@@ -120,38 +117,14 @@ onBeforeUnmount(() => {
 })
 
 function save() {
-  if (!editorView.value) return
-  const content = editorView.value.state.doc.toString()
+  if (!subscription) return
   saving.value = true
-
-  router.patch(
-    `/projects/${project.slug}/files/${path}`,
-    {
-      content,
-      commit_message: `Update ${path}`,
-      base_commit_sha: headSha,
-    },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        toast.add({
-          title: "File saved",
-          color: "success",
-        })
-      },
-      onError: () => {
-        toast.add({
-          title: "Save failed",
-          description:
-            "The file may have been modified by someone else. Please refresh and try again.",
-          color: "error",
-        })
-      },
-      onFinish: () => {
-        saving.value = false
-      },
-    },
-  )
+  subscription.send({ type: "save" })
+  toast.add({
+    title: "File saved",
+    color: "success",
+  })
+  saving.value = false
 }
 </script>
 

@@ -51,6 +51,10 @@
 - ActionCable Connection `connect` method must be public — `respond_to?(:connect)` only checks public methods; if private, test framework skips calling it
 - ActionCable connection tests: use `Struct.new(:user)` for warden mock (OpenStruct requires explicit require in Ruby 3.4)
 - ActionCable channel tests need `include ActiveJob::TestHelper` for `assert_enqueued_with` — it's not included by default in `ActionCable::Channel::TestCase`
+- Y.js frontend: `Y.transact(ydoc, fn, "remote")` marks updates as remote origin; check `origin !== "remote"` in `ydoc.on("update")` to avoid echo
+- Base64 for Y.js in browser: encode with `btoa(String.fromCharCode(...update))`, decode with `Uint8Array.from(atob(str), c => c.charCodeAt(0))`
+- `serialize_project` in FilesController includes `id` — needed for Action Cable channel subscription with `project_id`
+- `yCollab(ytext, null, { undoManager })` from `y-codemirror.next` — syncs CodeMirror state with Y.Text; pass `null` for awareness when cursor sharing not needed
 
 ---
 
@@ -544,4 +548,31 @@
   - Y.js text extraction: `doc.get_text("content").to_s` returns the string content from a Y::Doc text type
   - Job uses project owner as the commit author for auto-save commits — could be enhanced to track last editor
   - `good_job_concurrency_key` method on job instance returns the computed key — useful for testing
+---
+
+## 2026-02-06 - US-036
+- What was implemented: Collaborative editor frontend — Y.js and Action Cable setup in Files/Edit.vue
+- Files changed:
+  - app/javascript/pages/Files/Edit.vue (rewrote; added Y.Doc creation with getText('content') and UndoManager, Action Cable subscription to DocumentChannel, sync/update message handling, connection status tracking, cleanup on unmount)
+  - app/controllers/files_controller.rb (added `id` to serialize_project for Action Cable subscription)
+  - prd.json (marked US-036 as passes: true)
+- **Learnings for future iterations:**
+  - Y.js `Y.transact(ydoc, fn, origin)` sets the origin for updates — use `"remote"` origin to distinguish remote updates from local ones in the `ydoc.on("update")` handler
+  - `createConsumer()` from `@rails/actioncable` connects to the default `/cable` WebSocket endpoint — no URL configuration needed in development
+  - Base64 encode/decode for Y.js updates: `btoa(String.fromCharCode(...update))` to encode, `Uint8Array.from(atob(str), c => c.charCodeAt(0))` to decode
+  - The `serialize_project` helper needed `id` added alongside `name`, `slug`, `uuid` — DocumentChannel subscribes with integer `project_id`
+  - Action Cable subscription `received(data)` fires for all broadcasts including your own — filter by `sender !== currentUserId` for update messages
+  - Y.js UndoManager must be created before any remote updates are applied — it only tracks changes after instantiation
+---
+
+## 2026-02-06 - US-037
+- What was implemented: Integrated yCollab extension into CodeMirror 6 editor for real-time collaborative editing
+- Files changed:
+  - app/javascript/pages/Files/Edit.vue (replaced EditorView.updateListener with yCollab(ytext, null, { undoManager }) extension; changed Save button from router.patch to subscription.send({ type: "save" }) with toast notification)
+  - prd.json (marked US-037 as passes: true)
+- **Learnings for future iterations:**
+  - `yCollab(ytext, awareness, { undoManager })` from `y-codemirror.next` — pass `null` for awareness when not using cursor awareness, pass existing UndoManager to share undo/redo stack
+  - yCollab replaces manual `EditorView.updateListener` — it syncs CodeMirror state bidirectionally with Y.Text, so no need for manual doc change listeners
+  - Save via Action Cable (`subscription.send({ type: "save" })`) is simpler than Inertia `router.patch` — the FlushYdocToGitJob handles the actual Git commit from the cached Y.js state
+  - yCollab returns an array of extensions (ySync, yUndoManager, etc.) — spread or pass directly as an extensions array element
 ---
