@@ -1,0 +1,322 @@
+## Codebase Patterns
+- Use `@nuxt/ui` (not `@nuxt/ui-vue`) — the Vue standalone package is the same `@nuxt/ui` npm package
+- Use `@rails/actioncable` (not `@actioncable/core`) for Action Cable JS client
+- Yarn 4 with `nodeLinker: node-modules` in `.yarnrc.yml` for tool compatibility (PnP breaks oxlint/oxfmt)
+- Always run `bundle exec rubocop -A` to auto-fix correctable offenses before committing
+- The project uses `rubocop-rails-omakase` base config — it must be in the Gemfile
+- oxfmt works with directory arguments (e.g. `oxfmt --check app/javascript`) when glob patterns fail
+- `@codemirror/state`, `@codemirror/view`, and `typescript` are needed as peer dependencies
+- Pin `vite-plugin-ruby` to `5.1.0` — v5.1.2 has a `this.meta` bug that crashes Vite
+- Vite 6 required for ESM-only `@nuxt/ui/vite` import; `"type": "module"` needed in package.json
+- Nuxt UI CSS import is `@import "@nuxt/ui"` (not `@nuxt/ui-vue/theme.css`)
+- Auto-generated files (`auto-imports.d.ts`, `components.d.ts`) should be in `.gitignore`
+- Nuxt UI Vue plugin import is `@nuxt/ui/vue-plugin` (not `@nuxt/ui/vue`) — use this in createInertiaApp setup
+- Inertia page resolution glob path is relative to entrypoints dir: `../pages/**/*.vue`
+- Rubocop 1.84+ uses `plugins:` instead of `require:` for loading extensions (avoids deprecation warnings)
+- oxlint config (`.oxlintrc.json`) uses `rules` object with string severities and `ignorePatterns` array
+- oxfmt config (`.oxfmt.json`) supports `plugins.tailwindcss` for class sorting
+- mise tasks use `[tasks."name"]` TOML syntax with `run` for shell commands and `depends` for task dependencies
+- Docker Compose volume for postgres should mount to `/var/lib/postgresql/data` (not `/var/lib/postgresql`)
+- `mise run dev` starts Docker, installs deps, prepares DB, runs bin/dev with SIGINT/SIGTERM trap for cleanup
+- database.yml uses ENV vars `DB_HOST`, `DB_USERNAME`, `DB_PASSWORD` with defaults `localhost`/`postgres`/`postgres`
+- Rails 8.1.2 without Sprockets: `config.assets.quiet` causes "undefined method 'assets'" — remove it from development.rb
+- Devise fixtures use `Devise::Encryptor.digest(User, 'password123')` in ERB for proper password hashing
+- Include `Devise::Test::IntegrationHelpers` in `ActionDispatch::IntegrationTest` for `sign_in`/`sign_out` helpers
+- Devise requires a root route — `authenticate_user!` redirects to root after sign-in; define a root before other routes
+- Rubocop `Minitest/MultipleAssertions` defaults to max 3 assertions per test — use set operations to check collections in a single assertion
+- `vue-router@^4.5.0` is required by `@nuxt/ui` — Link component imports `useRoute` from `vue-router`
+- Devise Inertia controllers use `redirect_to ... inertia: { errors: ... }` for validation errors (not 422 responses)
+- `InertiaRails.configure` uses option assignment (`config.ssr_enabled = false`), not `config.share` blocks
+- `inertia_rails` v3.17 automatically shares flash `notice` and `alert` keys as top-level props (via `flash_keys` config)
+- Set `config.always_include_errors_hash = true` in InertiaRails config to avoid deprecation warnings
+- Vite test build (`bin/vite build --clear --mode=test`) must succeed before Inertia integration tests work
+- Use `inertia_share` on controllers (not `config.shared_data`) to share data with Inertia pages — `config.shared_data` doesn't exist in inertia_rails v3.17
+- Auth pages must use `defineOptions({ layout: false })` to opt out of AppLayout
+- Nuxt UI v3 uses `UApp` component as root wrapper for toast/overlay support (not `UNotifications`)
+- Default Inertia layout: set `page.default.layout` in resolve function; check `=== undefined` to allow pages to opt out with `layout: false`
+- ERB in YAML fixtures: use `<% ... %>` (no output) for variable assignments — `<%= ... %>` outputs into YAML and breaks parsing
+- `has_secure_token` requires the named column in DB — for digest-based tokens, use `SecureRandom` + `attr_reader` + `before_create` callback
+- Integration tests don't raise `ActiveRecord::RecordNotFound` — Rails catches it and returns 404; use `assert_response :not_found`
+- Git repos root path: `Rails.configuration.repos_root` — defaults to `tmp/repos`, overridable with `GIT_REPOS_ROOT` env var
+- Rugged `Commit.create` requires Ruby `Time.now`, not ActiveSupport `Time.current` (TypeError: expected Time object)
+- GitService uses `refs/heads/main` as the default branch reference for all operations
+- Parallel test workers can crash with Rugged — use `PARALLEL_WORKERS=1` if segfaults occur
+
+---
+
+## 2026-02-06 - US-002
+- What was implemented: Set up JavaScript dependencies and package.json with all required packages for the frontend build pipeline
+- Files changed:
+  - package.json (added all dependencies, devDependencies, packageManager, scripts)
+  - .yarnrc.yml (created, set nodeLinker to node-modules)
+  - yarn.lock (regenerated with all new dependencies)
+  - Gemfile (added rubocop-rails-omakase gem)
+  - Gemfile.lock (updated)
+  - app/javascript/entrypoints/application.js (formatted by oxfmt)
+  - config/initializers/content_security_policy.rb (rubocop auto-fix)
+- **Learnings for future iterations:**
+  - PRD references `@nuxt/ui-vue` and `@actioncable/core` but these don't exist on npm; correct packages are `@nuxt/ui` and `@rails/actioncable`
+  - Yarn PnP (.pnp.cjs) breaks oxlint/oxfmt — must use `nodeLinker: node-modules` in .yarnrc.yml
+  - `rubocop-rails-omakase` was missing from Gemfile but referenced in .rubocop.yml — caused rubocop to crash
+  - `@iconify-json/heroicons` latest is 1.2.3 (not 1.2.5) — be careful with version ranges
+  - oxfmt glob patterns (e.g. `'app/javascript/**/*.{vue,js,ts}'`) are treated literally by the tool, not as shell globs; they work when matching files exist but fail with "no target file" when no files match the pattern
+---
+
+## 2026-02-06 - US-003
+- What was implemented: Configured Vite with Vue, Nuxt UI, and Tailwind CSS 4 plugins
+- Files changed:
+  - vite.config.js (renamed from vite.config.mts; added vue(), ViteRuby(), ui() plugins with primary 'blue' and neutral 'slate'; added @ alias)
+  - app/javascript/css/application.css (created; imports tailwindcss and @nuxt/ui with @source directive)
+  - package.json (added "type": "module", upgraded vite to ^6.4.1, pinned vite-plugin-ruby to 5.1.0)
+  - .gitignore (added auto-imports.d.ts and components.d.ts)
+  - yarn.lock (updated)
+- **Learnings for future iterations:**
+  - `vite-plugin-ruby` v5.1.2 has a `this.meta` bug in the `config` hook — crashes with "Cannot read properties of undefined (reading 'meta')". Pin to 5.1.0.
+  - `@nuxt/ui/vite` is ESM-only — requires `"type": "module"` in package.json or `.mjs` extension
+  - Vite 5 doesn't work well with ESM-only plugins in `.js` config files — upgraded to Vite 6
+  - The correct CSS import for Nuxt UI standalone is `@import "@nuxt/ui"`, not `@nuxt/ui-vue/theme.css`
+  - Nuxt UI vite plugin auto-generates `auto-imports.d.ts` and `components.d.ts` — add to `.gitignore`
+  - `vite build` and `vite dev` fail when run directly via node CLI due to `vite-plugin-ruby` needing Rails context; use `bin/vite dev` or verify config loads via Vite's `loadConfigFromFile` API
+---
+
+## 2026-02-06 - US-004
+- What was implemented: Set up Inertia.js app entry point with createInertiaApp(), Vue 3, and Nuxt UI Vue plugin
+- Files changed:
+  - app/javascript/entrypoints/application.js (replaced placeholder with full Inertia.js + Nuxt UI setup)
+- **Learnings for future iterations:**
+  - Nuxt UI Vue plugin import path is `@nuxt/ui/vue-plugin` — confirmed from official Nuxt UI docs for standalone Vue + Inertia setup
+  - Page resolution glob path must be relative to the entrypoints directory: `../pages/**/*.vue`
+  - Inertia plugin is `.use(plugin)` (from setup params), Nuxt UI is `.use(ui)` — both registered on the same createApp chain
+  - oxfmt prefers double quotes over single quotes for JS string literals
+---
+
+## 2026-02-06 - US-005
+- What was implemented: Configured Rubocop linting with rubocop-rails, rubocop-minitest, rubocop-performance plugins and project-specific rules
+- Files changed:
+  - .rubocop.yml (replaced placeholder config with full configuration)
+- **Learnings for future iterations:**
+  - Rubocop 1.84+ uses `plugins` instead of `require` for extensions — using `require` still works but emits deprecation warnings
+  - The `rubocop-rails-omakase` base config is inherited; our project-specific rules override/extend it
+  - All 22 files in the scaffolded codebase pass rubocop with zero offenses out of the box
+---
+
+## 2026-02-06 - US-006
+- What was implemented: Configured Oxlint and oxfmt for JavaScript/Vue linting and formatting
+- Files changed:
+  - .oxlintrc.json (created with rules: no-unused-vars warn, no-console warn, eqeqeq error; ignorePatterns for node_modules, public, tmp)
+  - .oxfmt.json (created with printWidth 100, semi false, singleQuote true, trailingComma all, tailwindcss plugin)
+  - package.json (updated format/format:check scripts to use directory args instead of glob patterns)
+- **Learnings for future iterations:**
+  - oxfmt glob patterns with brace expansion (e.g. `'app/javascript/**/*.{vue,js,ts}'`) fail with "no target file" — use directory arguments instead (e.g. `app/javascript`)
+  - oxlint uses a `rules` object in `.oxlintrc.json` with string severity values: "warn", "error", "off"
+  - oxfmt tailwindcss plugin config goes under `plugins.tailwindcss` with `classAttributes` and `functions` arrays
+---
+
+## 2026-02-06 - US-007
+- What was implemented: Configured mise tasks, Docker Compose for development, and Procfile.dev
+- Files changed:
+  - .mise.toml (created; node 25.2.1, ruby 3.4.7, yarn 4.12.0; tasks: docker:start, docker:stop, deps, deps:ruby, deps:js, db:prepare, lint, test, dev)
+  - dev-docker-compose.yml (updated; postgres:18-alpine with healthcheck, browserless/chrome on 3333:3000, pgdata volume)
+  - Procfile.dev (updated; changed js to yarn vite dev, added jobs: bundle exec good_job start)
+- **Learnings for future iterations:**
+  - mise TOML task definitions use `[tasks."task:name"]` with `run` for commands and `depends` for dependencies
+  - Docker postgres volume should mount to `/var/lib/postgresql/data` (with `/data` suffix) for proper persistence
+  - `mise tasks` command validates that all tasks are correctly parsed
+  - The `dev` task uses a shell trap to clean up Docker containers on SIGINT/SIGTERM
+  - Procfile.dev uses `yarn vite dev` (not `bin/vite dev`) consistent with the yarn-based JS toolchain
+---
+
+## 2026-02-06 - US-008
+- What was implemented: Created users and personal_access_tokens migrations with all required columns, constraints, and indexes
+- Files changed:
+  - db/migrate/20260206144925_create_users.rb (users table: name, email, encrypted_password not null; admin default false; unique index on email)
+  - db/migrate/20260206144946_create_personal_access_tokens.rb (PAT table: user_id FK not null, name not null, token_digest not null unique, token_prefix limit 8, last_used_at, expires_at, revoked_at)
+  - db/schema.rb (auto-generated from migrations)
+  - config/database.yml (added host/username/password with ENV defaults for Docker postgres)
+  - config/environments/development.rb (removed config.assets.quiet — Sprockets not available)
+- **Learnings for future iterations:**
+  - Rails 8.1.2 scaffolded app includes `config.assets.quiet` in development.rb but Sprockets is not included — causes "undefined method 'assets'" error. Must remove this line.
+  - PostgreSQL via Docker Compose uses `postgres`/`postgres` credentials — database.yml needs explicit host/username/password when not using unix sockets
+  - Rollback/re-migrate idempotency verified — use `create_table` and `add_index` in `change` method for automatic reversibility
+---
+
+## 2026-02-06 - US-009
+- What was implemented: Created projects and project_memberships migrations with all required columns, constraints, indexes, and foreign keys
+- Files changed:
+  - db/migrate/20260206145228_create_projects.rb (projects table: name, slug, uuid with gen_random_uuid(), owner_id FK to users; unique indexes on slug and uuid)
+  - db/migrate/20260206145244_create_project_memberships.rb (project_memberships table: user_id FK, project_id FK, role default 'editor'; unique composite index on [user_id, project_id])
+  - db/schema.rb (auto-generated)
+- **Learnings for future iterations:**
+  - `t.uuid :uuid, null: false, default: "gen_random_uuid()"` — Rails handles the string-to-proc conversion for PostgreSQL UUID defaults
+  - `t.references :owner, null: false, foreign_key: { to_table: :users }` — use `to_table` option when the FK column name doesn't match the target table name
+  - Postgres port 5432 may already be allocated from a previous Docker start — check before starting containers
+---
+
+## 2026-02-06 - US-010
+- What was implemented: Created documents migration for caching file metadata with project_id FK, path, last_commit_sha, last_modified_at, and unique composite index
+- Files changed:
+  - db/migrate/20260206145428_create_documents.rb (documents table: project_id FK not null, path not null, last_commit_sha, last_modified_at; unique composite index on [project_id, path])
+  - db/schema.rb (auto-generated)
+- **Learnings for future iterations:**
+  - Port 5432 may be occupied by an SSH tunnel rather than Docker — the database is still accessible, just skip Docker container start
+  - Simple migrations with `create_table` + `add_index` in `change` method are automatically reversible without explicit `up`/`down`
+---
+
+## 2026-02-06 - US-011
+- What was implemented: Set up Devise authentication backend with User model, routes, controller auth, and tests
+- Files changed:
+  - app/models/user.rb (created; Devise modules: database_authenticatable, registerable, recoverable, rememberable, validatable; name presence validation)
+  - app/controllers/application_controller.rb (added before_action :authenticate_user!, configure_permitted_parameters for :name)
+  - app/controllers/home_controller.rb (created; temporary root controller rendering head :ok)
+  - config/initializers/devise.rb (generated by Devise installer)
+  - config/locales/devise.en.yml (generated by Devise installer)
+  - config/routes.rb (added devise_for :users, DELETE /logout route, root "home#index")
+  - db/migrate/20260206145752_add_devise_columns_to_users.rb (adds reset_password_token, reset_password_sent_at, remember_created_at, unique index)
+  - db/schema.rb (auto-generated)
+  - test/test_helper.rb (added Devise::Test::IntegrationHelpers)
+  - test/fixtures/users.yml (alice, bob, admin fixtures with encrypted passwords)
+  - test/models/user_test.rb (7 tests: validations, Devise modules)
+  - test/integration/authentication_test.rb (8 tests: redirect, login, logout, signup, invalid credentials)
+- **Learnings for future iterations:**
+  - Devise needs a root route — after sign-in it redirects to root_path; without it tests get 404
+  - Use `Devise::Encryptor.digest(User, 'password123')` in fixture ERB for password hashing
+  - `Devise::Test::IntegrationHelpers` must be included in `ActionDispatch::IntegrationTest` for `sign_in`/`sign_out` helpers
+  - Devise `configure_permitted_parameters` must be set up for custom attributes like `:name` — otherwise sign-up silently ignores them
+  - Rubocop auto-fix (`-A`) handles most Minitest assertion style changes (e.g., `assert_predicate`, `assert_includes`, empty lines before assertions)
+---
+
+## 2026-02-06 - US-012
+- What was implemented: Created Devise Inertia auth pages for login, signup, and logout flows
+- Files changed:
+  - app/controllers/users/sessions_controller.rb (created; overrides Devise SessionsController to render Inertia pages, handle auth with warden.authenticate non-bang)
+  - app/controllers/users/registrations_controller.rb (created; overrides Devise RegistrationsController to render Inertia pages, redirect with validation errors)
+  - app/javascript/pages/Auth/SignIn.vue (created; login page with UInput, UFormField, UButton, router.post submission)
+  - app/javascript/pages/Auth/SignUp.vue (created; signup page with name/email/password/confirmation fields, router.post submission)
+  - config/initializers/inertia_rails.rb (created; InertiaRails config with ssr_enabled: false, always_include_errors_hash: true)
+  - config/routes.rb (updated devise_for to use custom controllers, updated logout route)
+  - package.json (added vue-router dependency)
+  - yarn.lock (updated)
+  - test/integration/authentication_test.rb (updated: invalid credentials now expect redirect instead of 422)
+- **Learnings for future iterations:**
+  - `@nuxt/ui` requires `vue-router@^4.5.0` as a peer dependency — its Link component imports `useRoute` from `vue-router`, and Vite build fails without it
+  - Devise Inertia pattern: use `warden.authenticate` (non-bang) in sessions#create to avoid the failure app recall mechanism; manually redirect with `inertia: { errors: ... }` on failure
+  - `redirect_to path, inertia: { errors: hash }` stores errors in `session[:inertia_errors]` which are automatically merged into the next Inertia page's props as `errors`
+  - `InertiaRails.configure` in v3.17 uses direct option assignment, not method-based DSL (no `config.share`, use `config.ssr_enabled = false`)
+  - Flash keys `[:notice, :alert]` are shared as top-level props by default — no need for manual flash sharing
+  - `config.always_include_errors_hash = true` suppresses deprecation warning and ensures `errors: {}` is always in props
+  - Vite test build must be run (`bin/vite build --clear --mode=test`) before Inertia integration tests that render pages can work
+---
+
+## 2026-02-06 - US-013
+- What was implemented: Created AppLayout with navigation header, shared currentUser via inertia_share, updated page resolution to use default layout
+- Files changed:
+  - app/javascript/layouts/AppLayout.vue (created; header with MarkdownForge link, user name, Tokens/Settings/Logout buttons; UApp wrapper for toasts; UContainer for content; dark mode support)
+  - app/javascript/entrypoints/application.js (updated resolve to set AppLayout as default layout)
+  - app/javascript/pages/Auth/SignIn.vue (added defineOptions({ layout: false }) to opt out of AppLayout)
+  - app/javascript/pages/Auth/SignUp.vue (added defineOptions({ layout: false }) to opt out of AppLayout)
+  - app/controllers/application_controller.rb (added inertia_share for currentUser data)
+  - app/controllers/home_controller.rb (changed from head :ok to render inertia: "Home")
+  - app/javascript/pages/Home.vue (created; simple welcome page placeholder)
+- **Learnings for future iterations:**
+  - `inertia_share` is a class-level method on controllers, not a config option — `config.shared_data=` does not exist in inertia_rails v3.17
+  - Nuxt UI v3 uses `UApp` as root wrapper component for toast/tooltip/overlay support — there is no `UNotifications` component
+  - Auth pages need `defineOptions({ layout: false })` to skip the default AppLayout (they have their own full-screen centered layout)
+  - Inertia layout resolution: check `page.default.layout === undefined` (not falsy) to allow pages to explicitly set `layout: false`
+  - unplugin-vue-components auto-registers UApp, UContainer, UButton on first use in templates — no manual import needed
+---
+
+## 2026-02-06 - US-014
+- What was implemented: Built PersonalAccessToken model with SHA-256 token digest, active scope, authenticate class method, and revoke! instance method
+- Files changed:
+  - app/models/personal_access_token.rb (created; belongs_to :user, attr_reader :token, before_create generates token/digest/prefix, active scope, self.authenticate, revoke!)
+  - app/models/user.rb (added has_many :personal_access_tokens, dependent: :destroy)
+  - test/fixtures/personal_access_tokens.yml (created; active_token, revoked_token, expired_token fixtures)
+  - test/models/personal_access_token_test.rb (created; 8 tests covering creation, authentication, revoke, expiry, active scope)
+- **Learnings for future iterations:**
+  - `has_secure_token :token` requires a `token` column in the DB — since we store `token_digest` instead, use `SecureRandom.base58(24)` with `attr_reader :token` and set `@token` in before_create callback
+  - ERB in YAML fixtures: use `<% ... %>` (no output) for variable assignments, `<%= ... %>` only for values — output ERB tags on their own line break YAML parsing
+  - Rubocop `Minitest/MultipleAssertions` defaults to max 3 assertions per test — split tests that verify multiple aspects
+---
+
+## 2026-02-06 - US-015
+- What was implemented: Token management controller with index, create, and destroy (revoke) actions under /settings/tokens namespace
+- Files changed:
+  - app/controllers/settings/tokens_controller.rb (created; Settings::TokensController with index/create/destroy, serialized token props, flash-based new token display)
+  - config/routes.rb (added namespace :settings with resources :tokens)
+  - test/controllers/settings/tokens_controller_test.rb (created; 6 tests: index, create, destroy, cross-user guard, auth guard)
+- **Learnings for future iterations:**
+  - Integration tests don't raise `ActiveRecord::RecordNotFound` directly — Rails returns a 404 response instead; use `assert_response :not_found` rather than `assert_raises`
+  - `namespace :settings` creates `/settings/tokens` routes and expects controller in `Settings::TokensController` — matches the directory structure `app/controllers/settings/`
+  - Flash data (`flash[:new_token]`) works well for one-time token display; Inertia shares it via `newToken` prop
+---
+
+## 2026-02-06 - US-016
+- What was implemented: Token management UI page (Settings/Tokens.vue) with full CRUD UI for personal access tokens
+- Files changed:
+  - app/javascript/pages/Settings/Tokens.vue (created; UTable with columns for Name, Token prefix, Last Used, Status badge, Revoke action; UModal for token creation; UAlert for new token display and empty state; useToast for revoke notifications)
+- **Learnings for future iterations:**
+  - Nuxt UI v3 UTable uses `columns` array with `key`/`label` props and `#<column-key>-cell` slot pattern for custom cell rendering (e.g. `#name-cell`, `#status-cell`)
+  - UModal uses `v-model:open` for controlling visibility and `#content` slot for modal body content
+  - `useToast()` is auto-imported by Nuxt UI — call `toast.add({ title: '...', color: 'success' })` to show notifications
+  - UBadge supports `color` (success, error, warning) and `variant` (subtle, solid) props for status indicators
+  - UAlert supports `color`, `icon`, `title`, `description` props — good for both warning banners and empty states
+  - Token status can be derived client-side from `revokedAt` and `expiresAt` fields — no need for server-side status field
+---
+
+## 2026-02-06 - US-017
+- What was implemented: Project and ProjectMembership models with all associations and validations
+- Files changed:
+  - app/models/project.rb (created; belongs_to :owner, has_many :memberships/:users through, validates name/slug)
+  - app/models/project_membership.rb (created; belongs_to :user/:project, validates role inclusion and user uniqueness scoped to project)
+  - app/models/user.rb (added has_many :owned_projects, :memberships, :projects through memberships)
+  - test/fixtures/projects.yml (created; alpha and beta project fixtures)
+  - test/fixtures/project_memberships.yml (created; alice owner of alpha, bob editor of alpha, bob owner of beta)
+  - test/models/project_test.rb (created; 8 tests for validations, associations, cascade delete)
+  - test/models/project_membership_test.rb (created; 7 tests for validations, role inclusion, uniqueness, associations)
+  - test/models/user_test.rb (added 3 tests for owned_projects, projects through memberships, memberships count)
+- **Learnings for future iterations:**
+  - DB tables for projects and project_memberships were already created in US-009 — only models/tests needed
+  - Use `inverse_of: :owner` on `has_many :owned_projects` when foreign_key doesn't match convention
+  - Fixtures use simple association references (e.g., `owner: alice`) — Rails resolves them automatically from the fixture name
+---
+
+## 2026-02-06 - US-018
+- What was implemented: Configured repos_root for Git repository storage path
+- Files changed:
+  - config/application.rb (added config.repos_root from ENV['GIT_REPOS_ROOT'] with default tmp/repos)
+  - .gitignore (added tmp/repos/)
+- **Learnings for future iterations:**
+  - `config.repos_root` is accessed via `Rails.configuration.repos_root` in service classes
+  - Use `ENV.fetch("KEY", default)` pattern for env-based config with sensible defaults
+  - Production uses `/var/repos` (set via Kamal env), development uses `tmp/repos`
+---
+
+## 2026-02-06 - US-019
+- What was implemented: GitService class with core methods for Git repository management using Rugged
+- Files changed:
+  - app/services/git_service.rb (created; class with REPOS_ROOT, repo_path, init_repo, with_repo_lock, read_file, commit_file, list_files, resolve_commit; custom errors StaleCommitError, FileNotFoundError)
+  - test/services/git_service_test.rb (created; 12 tests covering init, commit, read, list, stale commit detection, file lock, error cases)
+- **Learnings for future iterations:**
+  - Rugged `Commit.create` requires a Ruby `Time.now` object — `Time.current` (ActiveSupport::TimeWithZone) raises `TypeError: expected Time object`
+  - GitService uses `refs/heads/main` as the default branch reference; Rugged bare repos don't have HEAD pointing to main by default
+  - `Rugged::Index.new` creates an in-memory index; call `read_tree` on existing tree before modifying, then `write_tree(repo)` to persist
+  - `Rugged::TreeError` is raised when `tree.path(path)` can't find a file — catch it for FileNotFoundError
+  - `Rugged::ReferenceError` is raised when accessing HEAD on an empty repo (no commits yet)
+  - Parallel test execution can cause segfaults with Rugged — run with `PARALLEL_WORKERS=1` if crashes occur
+  - File locking via `File.flock(File::LOCK_EX)` on a `.lock` file provides exclusive access for concurrent write protection
+  - `Rugged::Walker` with `SORT_TOPO | SORT_DATE` walks commits in topological+date order — use `push(oid)` to start from HEAD
+  - Filter file history by comparing blob OID at path between commit and parent — handles both creation (parent has nil OID) and modification
+---
+
+## 2026-02-06 - US-020
+- What was implemented: GitService history and delete methods — file_history, delete_file, file_content_at
+- Files changed:
+  - app/services/git_service.rb (added file_history, delete_file, file_content_at, blob_oid_at helper)
+  - test/services/git_service_test.rb (added 9 tests: delete file, delete missing file, delete from empty repo, file history with filtering, history entry structure, history on empty repo, content at specific SHA, missing file at SHA, invalid SHA)
+- **Learnings for future iterations:**
+  - `Rugged::Walker` is the correct way to walk commit history — use `push(oid)` to start and `sorting(SORT_TOPO | SORT_DATE)` for proper ordering
+  - To filter commits that touched a specific file: compare the blob OID at the path between the commit and its first parent — if different (or parent doesn't have the file), the commit touched it
+  - `blob_oid_at` helper catches `Rugged::TreeError` and returns nil for files not present in a tree — useful for history filtering
+  - `Rugged::OdbError` is raised when looking up a nonexistent SHA — catch it alongside `Rugged::InvalidError` for robust error handling
+  - Rubocop `Minitest/MultipleAssertions` max is 3 — compare hashes in a single assertion instead of asserting individual fields
+---

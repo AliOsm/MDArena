@@ -1,0 +1,876 @@
+{
+  "project": "MarkdownForge",
+  "branchName": "ralph/markdownforge",
+  "description": "Git-backed collaborative Markdown platform with real-time editing, Git Smart HTTP access, and PDF export",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Scaffold Rails application with core Ruby dependencies",
+      "description": "As a developer, I need a new Rails 8.1.2 app with PostgreSQL and all required Ruby gems so that the backend foundation is ready.",
+      "acceptanceCriteria": [
+        "Rails 8.1.2 app created with PostgreSQL adapter (`rails new mdforge --database=postgresql`)",
+        "Gemfile includes: devise, inertia_rails, vite_rails, rugged, good_job, grover, commonmarker, solid_cache, solid_cable, y-rb",
+        "Gemfile includes dev/test gems: rubocop, rubocop-rails, rubocop-minitest, rubocop-performance",
+        "`bundle install` succeeds without errors",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Set up JavaScript dependencies and package.json",
+      "description": "As a developer, I need all JS packages installed via Yarn 4 so that the frontend build pipeline has its dependencies.",
+      "acceptanceCriteria": [
+        "package.json has `\"packageManager\": \"yarn@4.12.0\"`",
+        "Dependencies include: @inertiajs/vue3, vue, @nuxt/ui-vue, @iconify-json/heroicons, @iconify-json/lucide, codemirror, @codemirror/lang-markdown, yjs, y-codemirror.next, markdown-it, vite, @vitejs/plugin-vue, vite-plugin-ruby, tailwindcss, @actioncable/core",
+        "devDependencies include: oxlint, oxfmt",
+        "package.json scripts: `lint` runs `oxlint ./app/javascript`, `format` runs `oxfmt --write 'app/javascript/**/*.{vue,js,ts}'`, `format:check` runs `oxfmt --check 'app/javascript/**/*.{vue,js,ts}'`",
+        "`yarn install` succeeds without errors",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Used @nuxt/ui (actual npm package) instead of @nuxt/ui-vue (doesn't exist). Used @rails/actioncable instead of @actioncable/core (doesn't exist). Added @codemirror/state, @codemirror/view, and typescript as peer deps. Switched to node-modules linker for compatibility. Added rubocop-rails-omakase gem to fix rubocop config."
+    },
+    {
+      "id": "US-003",
+      "title": "Configure Vite with Vue, Nuxt UI, and Tailwind CSS 4",
+      "description": "As a developer, I need Vite configured with the Vue plugin, Nuxt UI plugin, and Tailwind CSS 4 so that the frontend build pipeline works.",
+      "acceptanceCriteria": [
+        "vite.config.js registers vue(), ViteRuby(), and ui() plugins with primary color 'blue' and neutral 'slate'",
+        "app/javascript/css/application.css imports 'tailwindcss' and '@nuxt/ui-vue/theme.css' with @source directive pointing to '../**/*.{vue,js,ts}'",
+        "@ alias resolves to /app/javascript in vite.config.js",
+        "`yarn vite dev` starts without errors",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Used @nuxt/ui CSS import (not @nuxt/ui-vue/theme.css which doesn't exist). Upgraded Vite from v5 to v6.4.1 for ESM compatibility. Pinned vite-plugin-ruby to 5.1.0 (5.1.2 has this.meta bug). Added type:module to package.json. Added auto-generated .d.ts files to .gitignore."
+    },
+    {
+      "id": "US-004",
+      "title": "Set up Inertia.js app entry with Nuxt UI plugin",
+      "description": "As a developer, I need the Inertia.js app entry point configured with Vue 3 and Nuxt UI so that server-rendered pages work.",
+      "acceptanceCriteria": [
+        "app/javascript/entrypoints/application.js creates Inertia app with createInertiaApp()",
+        "Page resolution uses import.meta.glob('../pages/**/*.vue', { eager: true })",
+        "App uses .use(plugin) for Inertia and .use(nuxtUI) for Nuxt UI",
+        "Imports '../css/application.css' for Tailwind styles",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Used @nuxt/ui/vue-plugin for standalone Vue setup (per Nuxt UI docs). Nuxt UI Vue plugin is registered alongside Inertia plugin in createInertiaApp setup."
+    },
+    {
+      "id": "US-005",
+      "title": "Configure Rubocop linting",
+      "description": "As a developer, I need Rubocop configured for Ruby linting so that code quality is enforced.",
+      "acceptanceCriteria": [
+        ".rubocop.yml requires rubocop-rails, rubocop-minitest, rubocop-performance",
+        "TargetRubyVersion set to 3.4",
+        "NewCops: enable",
+        "Style/Documentation disabled",
+        "Metrics/MethodLength max set to 20",
+        "Layout/LineLength max set to 120",
+        "Excludes db/schema.rb, bin/**, node_modules/**, vendor/**",
+        "`bundle exec rubocop` passes on the scaffolded codebase",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Used plugins instead of require for rubocop extensions (rubocop 1.84+ syntax). All 22 files pass with zero offenses."
+    },
+    {
+      "id": "US-006",
+      "title": "Configure Oxlint and oxfmt for JavaScript/Vue",
+      "description": "As a developer, I need Oxlint and oxfmt configured for JS/Vue linting and formatting.",
+      "acceptanceCriteria": [
+        ".oxlintrc.json has rules: no-unused-vars warn, no-console warn, eqeqeq error",
+        ".oxlintrc.json has ignorePatterns: node_modules, public, tmp",
+        ".oxfmt.json configured with printWidth: 100, semi: false, singleQuote: true, trailingComma: all",
+        ".oxfmt.json has tailwindcss plugin enabled with classAttributes: ['class', 'className'] and functions: ['cn', 'clsx', 'tw']",
+        "`yarn lint` and `yarn format:check` pass on the scaffolded codebase",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Used directory arguments (app/javascript) instead of glob patterns for oxfmt scripts — glob patterns fail when brace expansion doesn't match. oxlint config uses rules object format with ignorePatterns. oxfmt config includes tailwindcss plugin with classAttributes and functions."
+    },
+    {
+      "id": "US-007",
+      "title": "Configure mise tasks and Docker Compose for development",
+      "description": "As a developer, I need mise run dev to start the entire development environment with a single command.",
+      "acceptanceCriteria": [
+        ".mise.toml specifies node = '25.2.1', ruby = '3.4.7', yarn = '4.12.0'",
+        ".mise.toml defines tasks: docker:start, docker:stop, deps, deps:ruby, deps:js, db:prepare, lint, test, dev",
+        "dev-docker-compose.yml defines postgres (postgres:18-alpine, port 5432, healthcheck) and chromium (browserless/chrome, port 3333:3000) services with pgdata volume",
+        "Procfile.dev starts web (bin/rails server -p 3000), js (yarn vite dev), and jobs (bundle exec good_job start)",
+        "mise run dev task starts Docker, installs deps, prepares DB, runs bin/dev, and traps SIGINT/SIGTERM to run docker compose down",
+        "mise run test runs 'CI=1 bundle exec rails test'",
+        "mise run lint runs Rubocop, oxfmt check, and oxlint in sequence with set +e",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Used postgres:18-alpine (as specified in PRD). Changed Procfile.dev js process from bin/vite to yarn vite dev. Added browserless/chrome on port 3333:3000 for PDF generation. mise tasks verified with mise tasks command."
+    },
+    {
+      "id": "US-008",
+      "title": "Create users and personal_access_tokens migrations",
+      "description": "As a developer, I need the users and personal_access_tokens tables created.",
+      "acceptanceCriteria": [
+        "Migration creates users table: name (string, not null), email (string, not null, unique index), encrypted_password (string, not null), admin (boolean, default false), timestamps",
+        "Migration creates personal_access_tokens table: user_id (references, not null, FK), name (string, not null), token_digest (string, not null, unique index), token_prefix (string, limit 8), last_used_at (datetime), expires_at (datetime), revoked_at (datetime), timestamps",
+        "rails db:migrate runs without errors",
+        "rails db:rollback and rails db:migrate are idempotent",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Fixed config.assets.quiet error in development.rb (Sprockets not used with Vite). Added host/username/password to database.yml for Docker postgres connectivity."
+    },
+    {
+      "id": "US-009",
+      "title": "Create projects and project_memberships migrations",
+      "description": "As a developer, I need the projects and project_memberships tables created.",
+      "acceptanceCriteria": [
+        "Migration creates projects table: name (string, not null), slug (string, not null, unique index), uuid (uuid, not null, default gen_random_uuid(), unique index), owner_id (references users, not null, FK), timestamps",
+        "Migration creates project_memberships table: user_id (references, not null, FK), project_id (references, not null, FK), role (string, not null, default 'editor'), timestamps, unique composite index on [user_id, project_id]",
+        "rails db:migrate runs without errors",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "Both migrations use `change` method for automatic reversibility. Projects table uses gen_random_uuid() default for uuid column. Rollback and re-migrate verified idempotent."
+    },
+    {
+      "id": "US-010",
+      "title": "Create documents migration",
+      "description": "As a developer, I need the documents table for caching file metadata.",
+      "acceptanceCriteria": [
+        "Migration creates documents table: project_id (references, not null, FK), path (string, not null), last_commit_sha (string), last_modified_at (datetime), timestamps, unique composite index on [project_id, path]",
+        "rails db:migrate runs without errors",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "Documents table with project_id FK, path, last_commit_sha, last_modified_at. Unique composite index on [project_id, path]. Rollback and re-migrate verified idempotent."
+    },
+    {
+      "id": "US-011",
+      "title": "Set up Devise authentication backend",
+      "description": "As a developer, I need Devise installed and configured for the User model so that authentication works.",
+      "acceptanceCriteria": [
+        "Devise installed and configured for the User model with database_authenticatable, registerable, recoverable, rememberable, and validatable modules",
+        "User model has name validation (presence)",
+        "Logout route configured as DELETE /logout",
+        "Unauthenticated requests redirect to the login page",
+        "ApplicationController has before_action :authenticate_user!",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": "Added Devise columns (reset_password_token, reset_password_sent_at, remember_created_at) via migration. Created User model with all 5 Devise modules and name validation. Configured DELETE /logout route. Added before_action :authenticate_user! and configure_permitted_parameters to ApplicationController. Added temporary HomeController#index as root route. Created user fixtures and tests (model + integration)."
+    },
+    {
+      "id": "US-012",
+      "title": "Create Devise Inertia auth pages (login, signup, logout)",
+      "description": "As a user, I want to sign up, log in, and log out using Inertia + Vue + Nuxt UI pages.",
+      "acceptanceCriteria": [
+        "Sign up page at /users/sign_up collects name, email, and password using UInput and UFormField components",
+        "Login page at /users/sign_in accepts email and password using UInput and UFormField components",
+        "Both pages use Inertia form submission (router.post)",
+        "Devise controllers overridden to render Inertia pages instead of ERB",
+        "Logout link (DELETE /logout) ends the session and redirects to login",
+        "Verify sign up, login, and logout flows work in browser",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": "Added vue-router@^4.5.0 as dependency required by @nuxt/ui Link component. Custom Devise controllers redirect with inertia: { errors: ... } for validation errors instead of rendering 422. Configured InertiaRails initializer with always_include_errors_hash: true. Updated auth tests for redirect-based error handling pattern."
+    },
+    {
+      "id": "US-013",
+      "title": "Create AppLayout with navigation header",
+      "description": "As a user, I want a consistent app layout with navigation so I can move between projects, settings, and tokens.",
+      "acceptanceCriteria": [
+        "app/javascript/layouts/AppLayout.vue renders a header with: app name 'MarkdownForge' linking to /projects, current user name, 'Tokens' button linking to /settings/tokens, 'Settings' button linking to /settings, 'Log out' button (DELETE to /logout)",
+        "Header uses UContainer, UButton components",
+        "Main content area wrapped in UContainer with py-8 class",
+        "UNotifications component rendered for toast messages",
+        "Dark mode supported (bg-gray-50/bg-gray-950 backgrounds, border colors)",
+        "Layout is the default for all Inertia pages via page resolution in application.js",
+        "Verify layout renders correctly in browser",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": true,
+      "notes": "Used UApp component as root wrapper for toast support (Nuxt UI v3 equivalent of UNotifications). Auth pages opt out of AppLayout via defineOptions({ layout: false }). Shared currentUser data via inertia_share on ApplicationController. HomeController now renders Inertia Home page."
+    },
+    {
+      "id": "US-014",
+      "title": "Build PersonalAccessToken model",
+      "description": "As a developer, I need the PAT model so that users can authenticate Git operations.",
+      "acceptanceCriteria": [
+        "PersonalAccessToken model belongs_to :user, uses has_secure_token :token",
+        "before_create callback sets token_digest (SHA-256 hex of token) and token_prefix (first 8 chars of token)",
+        "active scope returns tokens where revoked_at is nil and (expires_at is null or expires_at > Time.current)",
+        "self.authenticate(plain_token) computes SHA-256 digest and queries active scope by token_digest",
+        "revoke! method sets revoked_at to Time.current",
+        "Plain token is accessible only during creation (never stored in DB)",
+        "Minitest: test token creation stores digest but not plain token",
+        "Minitest: test authenticate returns the PAT for valid tokens and nil for revoked/expired tokens",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": true,
+      "notes": "Used SecureRandom.base58(24) with attr_reader :token instead of has_secure_token (which requires a token column). SHA-256 digest and prefix stored on before_create. Plain token accessible only during creation via @token instance variable."
+    },
+    {
+      "id": "US-015",
+      "title": "Token management controller",
+      "description": "As a developer, I need a controller for CRUD operations on personal access tokens.",
+      "acceptanceCriteria": [
+        "GET /settings/tokens renders Settings/Tokens Inertia page with list of current user's tokens (including revoked/expired) and optional newToken flash",
+        "POST /settings/tokens creates a token for current_user and redirects back with plain token in flash",
+        "DELETE /settings/tokens/:id revokes the token (only if owned by current_user) and redirects back",
+        "Routes defined under /settings/tokens namespace",
+        "Minitest: test index, create, and revoke actions",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": true,
+      "notes": "Settings::TokensController with index/create/destroy under /settings/tokens namespace. Index renders Inertia page with serialized tokens and optional newToken flash. Create generates PAT and redirects with plain token in flash. Destroy revokes token (scoped to current_user). Integration tests cover all actions plus auth guard."
+    },
+    {
+      "id": "US-016",
+      "title": "Token management UI page",
+      "description": "As a user, I want to create, view, and revoke personal access tokens in a web UI.",
+      "acceptanceCriteria": [
+        "Settings/Tokens.vue page lists tokens in a UTable with columns: Name, Token (prefix + '........' in monospace code tag), Last Used, Status, and actions",
+        "Revoked/expired tokens shown greyed out with a 'Revoked' or 'Expired' UBadge",
+        "Active tokens have a 'Revoke' button (UButton, color error, ghost variant)",
+        "'New Token' button opens a UModal with a name input (UFormField + UInput)",
+        "After creation, plain token displayed in a UAlert (warning color, 'copy it now, it won't be shown again')",
+        "Revoke action shows a success toast via useToast()",
+        "Verify create, display, and revoke flows in browser",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": true,
+      "notes": "Settings/Tokens.vue with UTable (columns: Name, Token prefix with monospace code, Last Used, Status badge, Revoke action), UModal for token creation with UFormField + UInput, UAlert for new token display (warning color) and empty state, useToast for revoke success notification. Greyed out styling for revoked/expired tokens."
+    },
+    {
+      "id": "US-017",
+      "title": "Project and ProjectMembership models with associations",
+      "description": "As a developer, I need the Project and ProjectMembership models with ownership and membership associations.",
+      "acceptanceCriteria": [
+        "Project model validates name presence, slug presence and uniqueness",
+        "Project belongs_to :owner, class_name: 'User'",
+        "Project has_many :memberships, class_name: 'ProjectMembership' and has_many :users, through: :memberships",
+        "User has_many :owned_projects, class_name: 'Project', foreign_key: :owner_id and has_many :projects, through: :memberships (via ProjectMembership)",
+        "ProjectMembership validates role inclusion in %w[owner editor]",
+        "ProjectMembership validates uniqueness of user_id scoped to project_id",
+        "Minitest: test all associations and validations",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": true,
+      "notes": "Project model: belongs_to :owner, has_many :memberships/:users through. ProjectMembership: validates role in [owner, editor], uniqueness of user per project. User: has_many :owned_projects, :memberships, :projects through memberships. 25 model tests all passing."
+    },
+    {
+      "id": "US-018",
+      "title": "Configure repos_root for Git repository storage",
+      "description": "As a developer, I need the Git repos root path configurable so it can differ between development and production.",
+      "acceptanceCriteria": [
+        "config/application.rb or an initializer sets config.repos_root from ENV['GIT_REPOS_ROOT'] with default Rails.root.join('tmp/repos')",
+        "Development uses tmp/repos",
+        "Production uses /var/repos (set via Kamal env)",
+        ".gitignore includes tmp/repos/",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": true,
+      "notes": "Set config.repos_root in config/application.rb from ENV['GIT_REPOS_ROOT'] with default Rails.root.join('tmp/repos'). Added tmp/repos/ to .gitignore."
+    },
+    {
+      "id": "US-019",
+      "title": "Implement GitService core methods (init, read, write, list)",
+      "description": "As a developer, I need the core GitService methods for initializing repos and reading/writing files.",
+      "acceptanceCriteria": [
+        "GitService is a class in app/services/git_service.rb",
+        "REPOS_ROOT reads from Rails.configuration.repos_root",
+        "repo_path(project) returns '#{REPOS_ROOT}/#{project.uuid}.git'",
+        "init_repo(project) calls Rugged::Repository.init_at(path, :bare)",
+        "with_repo_lock(project) acquires exclusive file lock (File.flock(File::LOCK_EX)) on '#{repo_path}.lock' and yields",
+        "read_file(project, path, ref: 'HEAD') returns file content; raises FileNotFoundError if path doesn't exist",
+        "commit_file(project:, path:, content:, user:, message:, base_sha: nil) writes blob, updates index, creates commit, updates HEAD; raises StaleCommitError if base_sha doesn't match HEAD",
+        "list_files(project, ref: 'HEAD') returns array of file paths by walking blobs",
+        "Custom errors: StaleCommitError, FileNotFoundError",
+        "Minitest: test init, write, read, list, stale commit detection",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 19,
+      "passes": true,
+      "notes": "Rugged requires Ruby Time.now (not ActiveSupport TimeWithZone). Uses refs/heads/main as default branch. File lock via File.flock(LOCK_EX) on .lock file. 12 tests covering init, read, write, list, stale commit, file lock."
+    },
+    {
+      "id": "US-020",
+      "title": "Implement GitService history and delete methods",
+      "description": "As a developer, I need GitService methods for file history, deletion, and reading content at specific commits.",
+      "acceptanceCriteria": [
+        "file_history(project, path) returns array of commits that touched the given path with sha, message, author hash, and time",
+        "delete_file(project:, path:, user:, message:) removes file from index and creates a commit; uses with_repo_lock",
+        "file_content_at(project, path, sha) returns file content at a specific commit SHA",
+        "Minitest: test delete, history (returns correct commits), file_content_at",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 20,
+      "passes": true,
+      "notes": "file_history uses Rugged::Walker with SORT_TOPO|SORT_DATE, filters commits by blob oid changes. delete_file uses with_repo_lock, removes from index. file_content_at looks up commit by SHA and reads blob. 9 new tests (21 total) all passing."
+    },
+    {
+      "id": "US-021",
+      "title": "Projects controller backend (index, show, create)",
+      "description": "As a developer, I need the ProjectsController with index, show, and create actions.",
+      "acceptanceCriteria": [
+        "GET /projects renders Projects/Index Inertia page with current user's projects (ordered by updated_at desc), each serialized with id, name, slug, uuid, role, owner name, updated_at, clone_url",
+        "GET /projects/:slug renders Projects/Show Inertia page with serialized project and files list from GitService.list_files",
+        "POST /projects creates project with slug from name.parameterize, inits bare Git repo via GitService.init_repo, creates owner membership, redirects to project show",
+        "set_project scoped to current_user.projects",
+        "Minitest: test index, show, create actions",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Projects index page UI",
+      "description": "As a user, I want to see my projects listed and create new ones.",
+      "acceptanceCriteria": [
+        "Projects/Index.vue lists projects as UCard components showing project name, owner name, updated_at, and role as UBadge",
+        "Each card links to /projects/:slug",
+        "Cards have hover:ring-2 hover:ring-primary-500 transition",
+        "Empty state shows UAlert with 'No projects yet' message and folder-plus icon",
+        "'New Project' button opens UModal with UFormField + UInput for project name",
+        "Create form submits via router.post('/projects', { name: ... })",
+        "Verify project creation and listing in browser",
+        "Typecheck passes"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Project show page UI with file list",
+      "description": "As a user, I want to see a project's files and create new files.",
+      "acceptanceCriteria": [
+        "Projects/Show.vue displays project name as h1, role UBadge, and clone URL in a code tag",
+        "Files listed as UButton components (variant ghost, block, justify-start, document-text icon) linking to /projects/:slug/files/:path",
+        "Empty file list shows UAlert with 'No files yet' message",
+        "'New File' button opens UModal with filename input; auto-appends .md if missing; default content is '# filename\\n'",
+        "Create form submits via router.post to /projects/:slug/files",
+        "Verify file list and create file flow in browser",
+        "Typecheck passes"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "FilesController with CRUD actions and routes",
+      "description": "As a developer, I need the FilesController for creating, viewing, editing, and deleting files.",
+      "acceptanceCriteria": [
+        "Routes: GET /projects/:project_slug/files/:path (show), GET .../files/:path/edit (edit), PATCH .../files/:path (update), POST .../files (create), DELETE .../files/:path (destroy)",
+        "Routes for download: GET .../files/:path/download_md, POST .../files/:path/download_pdf",
+        "FilesController uses before_action :set_project scoped to current_user.projects.find_by!(slug: params[:project_slug])",
+        "show action reads file content and HEAD SHA via GitService, renders Files/Show Inertia page",
+        "edit action reads file content and HEAD SHA, renders Files/Edit Inertia page",
+        "update action commits via GitService.commit_file with base_sha; on StaleCommitError redirects back with alert",
+        "create action commits a new file; destroy action deletes file and redirects to project",
+        "download_md sends raw markdown as attachment; download_pdf enqueues PdfExportJob",
+        "Minitest: test show, edit, update, create, destroy, stale commit redirect",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "MarkdownPreview Vue component",
+      "description": "As a user, I want to preview rendered Markdown so I can see how my document looks.",
+      "acceptanceCriteria": [
+        "app/javascript/components/MarkdownPreview.vue accepts a content string prop",
+        "Uses markdown-it with html: false, linkify: true, typographer: true",
+        "Renders HTML inside a div with Tailwind 'prose prose-sm max-w-none dark:prose-invert' classes",
+        "Renders headings, lists, code blocks, links, blockquotes, and tables correctly",
+        "Verify preview renders correctly in browser",
+        "Typecheck passes"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "File show page UI",
+      "description": "As a user, I want to view a Markdown file with rendered preview and action buttons.",
+      "acceptanceCriteria": [
+        "Files/Show.vue displays the file path as a heading",
+        "Rendered Markdown preview shown via MarkdownPreview component",
+        "Action buttons: 'Edit' (links to edit page), 'History' (links to history page), 'Download MD', 'Download PDF'",
+        "'Download MD' links to GET .../download_md",
+        "'Download PDF' submits POST to .../download_pdf and shows a notice toast",
+        "Verify file show page renders correctly in browser",
+        "Typecheck passes"
+      ],
+      "priority": 26,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "Markdown editor page with CodeMirror 6",
+      "description": "As a user, I want a CodeMirror 6 editor for writing Markdown with syntax highlighting.",
+      "acceptanceCriteria": [
+        "Files/Edit.vue page renders a CodeMirror 6 editor with basicSetup and markdown() language extension",
+        "Editor fills available space with a border rounded-lg class",
+        "A 'Save' button sends editor content to PATCH /projects/:slug/files/:path with commit_message and base_commit_sha params via Inertia router",
+        "Connection status badge shows 'connected' (success color) or 'disconnected' (error color) using UBadge",
+        "Split-pane or toggle between editor and MarkdownPreview component",
+        "Verify editor loads, accepts input, and saves in browser",
+        "Typecheck passes"
+      ],
+      "priority": 27,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-028",
+      "title": "File history controller and backend",
+      "description": "As a developer, I need the FileHistoryController to serve commit history and file content at specific commits.",
+      "acceptanceCriteria": [
+        "GET /projects/:project_slug/files/:path/history renders Files/History Inertia page with history array from GitService.file_history",
+        "GET /projects/:project_slug/files/:path/history/:sha renders Files/HistoryShow Inertia page with content from GitService.file_content_at",
+        "FileHistoryController scoped to current_user.projects",
+        "Minitest: test index and show actions",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 28,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "title": "File history UI page",
+      "description": "As a user, I want to see the commit history of a file in a table.",
+      "acceptanceCriteria": [
+        "Files/History.vue renders a UTable with columns: Commit (first 8 chars in UBadge code tag), Message, Author, Date, and 'View' action button",
+        "Each View button links to /projects/:slug/files/:path/history/:sha",
+        "Empty history shows UAlert with 'No history' message",
+        "'Back to file' UButton links to the file show page",
+        "Verify history table renders correctly in browser",
+        "Typecheck passes"
+      ],
+      "priority": 29,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-030",
+      "title": "Historical file view page",
+      "description": "As a user, I want to view a file's content at a specific commit.",
+      "acceptanceCriteria": [
+        "Files/HistoryShow.vue displays the commit SHA in a UBadge",
+        "Rendered Markdown preview of the file at that commit via MarkdownPreview component",
+        "'Back to history' UButton links to the file history page",
+        "Verify historical file content renders correctly in browser",
+        "Typecheck passes"
+      ],
+      "priority": 30,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-031",
+      "title": "Configure GoodJob as Active Job backend",
+      "description": "As a developer, I need GoodJob configured with async execution, queues, and cron jobs.",
+      "acceptanceCriteria": [
+        "config/application.rb sets config.active_job.queue_adapter = :good_job",
+        "GoodJob initializer configures: execution_mode: :async, queues 'default:5;pdf_export:2', max_threads: 7, poll_interval: 5, shutdown_timeout: 25, enable_cron: true",
+        "Cron entries: cleanup_expired_tokens (daily at 3 AM, CleanupExpiredTokensJob), cleanup_stale_ydocs (every 15 min, CleanupStaleYdocsJob)",
+        "GoodJob dashboard mounted at /good_job behind authenticate :user, ->(user) { user.admin? }",
+        "Minitest: test that a job can be enqueued",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 31,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-032",
+      "title": "Action Cable setup with Solid Cable",
+      "description": "As a developer, I need Action Cable configured with Solid Cable (PostgreSQL-backed) for WebSocket connections.",
+      "acceptanceCriteria": [
+        "config/cable.yml configured to use solid_cable adapter in development and production",
+        "Solid Cable migration run",
+        "ApplicationCable::Connection authenticates the user from the Devise warden session",
+        "WebSocket endpoint available at /cable",
+        "Minitest: test that unauthenticated connections are rejected",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 32,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-033",
+      "title": "DocumentChannel subscribe and init logic",
+      "description": "As a developer, I need the DocumentChannel that loads or initializes Y.js doc state on subscribe.",
+      "acceptanceCriteria": [
+        "DocumentChannel subscribes with project_id and file_path params",
+        "On subscribe: rejects if user lacks project membership",
+        "On subscribe: loads Y.js state from Solid Cache (key: ydoc:<project_id>:<file_path>) or initializes from Git file content",
+        "load_or_init_ydoc: reads from cache; if miss, reads file from Git (or empty string if FileNotFoundError), creates Y::Doc, inserts into getText('content'), caches state with 2-hour TTL",
+        "Transmits initial state as Base64-encoded sync message",
+        "stream_from 'document:<project_id>:<file_path>'",
+        "Minitest: test subscribe, reject for non-members, state initialization",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 33,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-034",
+      "title": "DocumentChannel receive and broadcast logic",
+      "description": "As a developer, I need the DocumentChannel to handle update and save messages from clients.",
+      "acceptanceCriteria": [
+        "On 'update' message: decodes Base64 update, applies to cached Y::Doc via y-rb, writes merged state to cache (2-hour TTL), broadcasts to all subscribers with sender ID, enqueues FlushYdocToGitJob with 30-second delay",
+        "On 'save' message: immediately enqueues FlushYdocToGitJob",
+        "On unsubscribe: enqueues FlushYdocToGitJob with 5-second delay",
+        "Minitest: test update broadcast, save enqueue, unsubscribe enqueue",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 34,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-035",
+      "title": "FlushYdocToGitJob",
+      "description": "As a developer, I need a background job that flushes Y.js document state to a Git commit.",
+      "acceptanceCriteria": [
+        "FlushYdocToGitJob reads Y.js state from cache key ydoc:<project_id>:<file_path>",
+        "Extracts text content from Y::Doc getText('content')",
+        "Commits to Git via GitService.commit_file with message 'Auto-save <file_path>'",
+        "Skips commit if content matches existing file content (no-op)",
+        "Uses good_job_control_concurrency_with key 'flush_ydoc:<project_id>:<file_path>' and total_limit: 1",
+        "Returns early if cache state is nil",
+        "Minitest: test flush creates commit, skip on no change, concurrency key configured",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 35,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-036",
+      "title": "Collaborative editor frontend - Y.js and Action Cable setup",
+      "description": "As a user, I want Files/Edit.vue to set up Y.js and connect to Action Cable for real-time collaboration.",
+      "acceptanceCriteria": [
+        "Files/Edit.vue creates a Y.Doc on mount, gets getText('content'), sets up Y.UndoManager",
+        "Creates Action Cable subscription to DocumentChannel with project_id and file_path",
+        "On 'sync' message: applies Base64-decoded state to Y.Doc, sets status to 'connected'",
+        "On 'update' message from other users (sender !== currentUserId): applies Base64-decoded update to Y.Doc",
+        "Local Y.Doc updates (origin !== 'remote') sent to channel as Base64-encoded update messages",
+        "Connection status ref updates between 'connecting', 'connected', 'disconnected'",
+        "On unmount: unsubscribes from channel, destroys Y.Doc",
+        "Typecheck passes"
+      ],
+      "priority": 36,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-037",
+      "title": "Collaborative editor frontend - CodeMirror yCollab integration",
+      "description": "As a user, I want the CodeMirror editor to use yCollab for real-time collaborative editing.",
+      "acceptanceCriteria": [
+        "CodeMirror 6 editor uses yCollab(ytext, null, { undoManager }) extension for collaborative editing",
+        "Editor extensions include basicSetup, markdown(), and yCollab",
+        "'Save' button sends { type: 'save' } to the channel and shows a toast via useToast()",
+        "Connection status UBadge shows current status with appropriate color (success/error)",
+        "Verify two browser tabs can collaboratively edit the same file in real time",
+        "Typecheck passes"
+      ],
+      "priority": 37,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-038",
+      "title": "Auto-save timer in collaborative editor",
+      "description": "As a user, I want the editor to auto-save after 60 seconds of inactivity so I don't lose work.",
+      "acceptanceCriteria": [
+        "Files/Edit.vue sets up a debounced timer that sends { type: 'save' } to the channel after 60 seconds of no local edits",
+        "Timer resets on each local Y.Doc update",
+        "Timer is cleared on unmount",
+        "Auto-save shows a subtle toast or status update (e.g., 'Auto-saved')",
+        "Verify auto-save triggers after inactivity in browser",
+        "Typecheck passes"
+      ],
+      "priority": 38,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-039",
+      "title": "Git HTTP auth endpoint",
+      "description": "As a developer, I need a Rails endpoint that Nginx calls to authorize Git HTTP requests using PATs.",
+      "acceptanceCriteria": [
+        "Api::Git::AuthorizeController#show at GET /api/git/authorize",
+        "Skips Devise authenticate_user! (skip_before_action)",
+        "Extracts Basic Auth credentials from Authorization header; returns 401 if missing or not Basic",
+        "Decodes Base64 credentials to get email and token",
+        "Finds user by email and authenticates token via PersonalAccessToken.authenticate; returns 401 if either fails",
+        "Touches last_used_at on the PAT",
+        "Extracts project slug from X-Original-URI header (pattern: /git/<slug>.git/...)",
+        "Checks user has membership on project; returns 403 if not",
+        "For push (URI contains git-receive-pack): checks role is owner or editor; returns 403 if not",
+        "Returns 200 on success",
+        "Minitest: test auth success, invalid token, no membership, push permission check",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 39,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-040",
+      "title": "Rails built-in rate limiting on Git auth endpoint",
+      "description": "As a developer, I need rate limiting on the Git auth endpoint to prevent brute force attacks.",
+      "acceptanceCriteria": [
+        "Git auth endpoint uses Rails built-in rate_limit method (rate_limit to: 60, within: 1.minute or similar)",
+        "Rate limit scoped by IP address",
+        "Returns 429 Too Many Requests when limit exceeded",
+        "Minitest: test rate limiting returns 429 after threshold",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 40,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-041",
+      "title": "Nginx configuration for Git Smart HTTP",
+      "description": "As a developer, I need Nginx configured to serve Git Smart HTTP via git-http-backend.",
+      "acceptanceCriteria": [
+        "config/nginx/app.conf created",
+        "Upstream rails_app on 127.0.0.1:3000",
+        "location / proxies to Rails with Host, X-Real-IP, X-Forwarded-For, X-Forwarded-Proto headers",
+        "location /cable proxies with WebSocket upgrade headers (HTTP/1.1, Upgrade, Connection)",
+        "location ~ ^/git/(?<repo_path>.+) uses auth_request /internal/git/authorize, passes to fcgiwrap socket with git-http-backend, sets GIT_PROJECT_ROOT to /var/repos, GIT_HTTP_EXPORT_ALL, client_max_body_size 50m",
+        "location = /internal/git/authorize is internal, proxies to /api/git/authorize with X-Original-URI and Authorization headers, no request body",
+        "Typecheck passes"
+      ],
+      "priority": 41,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-042",
+      "title": "Configure Grover for PDF generation",
+      "description": "As a developer, I need Grover configured to generate PDFs from HTML.",
+      "acceptanceCriteria": [
+        "config/initializers/grover.rb sets format A4, margins (top: 1cm, bottom: 1cm, left: 1.5cm, right: 1.5cm), print_background: true",
+        "Development config includes launch_args: ['--no-sandbox'] and browser_ws_endpoint: 'ws://localhost:3333'",
+        "Typecheck passes"
+      ],
+      "priority": 42,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-043",
+      "title": "PdfExportJob with Active Storage and notification",
+      "description": "As a developer, I need a background job that generates a PDF from Markdown and notifies the user.",
+      "acceptanceCriteria": [
+        "PdfExportJob queued on :pdf_export queue",
+        "Reads file content from Git via GitService.read_file",
+        "Renders Markdown to HTML using CommonMarker.render_html with :table, :strikethrough, :tasklist extensions",
+        "Wraps HTML in styled document template (system fonts, prose styles for h1/h2/code/pre/blockquote/table/img, max-width 800px)",
+        "Generates PDF via Grover.new(html).to_pdf",
+        "Uploads PDF to Active Storage blob with filename '<basename>.pdf' and content_type 'application/pdf'",
+        "Broadcasts pdf_ready notification to 'user:<user_id>:notifications' via ActionCable with filename and download URL",
+        "Minitest: test job creates PDF blob and broadcasts notification",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 43,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-044",
+      "title": "User notifications channel and PDF notification frontend",
+      "description": "As a user, I want to receive a toast notification with a download link when my PDF is ready.",
+      "acceptanceCriteria": [
+        "UserNotificationsChannel streams from 'user:<user_id>:notifications' for authenticated users",
+        "AppLayout.vue subscribes to this channel on mount",
+        "On pdf_ready message: shows a toast notification (useToast) with the filename and a clickable download link",
+        "On unmount: unsubscribes from channel",
+        "Verify PDF export triggers notification and download works in browser",
+        "Typecheck passes"
+      ],
+      "priority": 44,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-045",
+      "title": "CleanupExpiredTokensJob",
+      "description": "As a developer, I need a cron job that cleans up expired and long-revoked tokens.",
+      "acceptanceCriteria": [
+        "CleanupExpiredTokensJob deletes tokens where expires_at < Time.current OR revoked_at < 30.days.ago",
+        "Does not delete active tokens (no expiry, not revoked)",
+        "Registered in GoodJob cron as cleanup_expired_tokens at '0 3 * * *'",
+        "Minitest: test expired tokens deleted, old revoked tokens deleted, active tokens kept",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 45,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-046",
+      "title": "CleanupStaleYdocsJob",
+      "description": "As a developer, I need a cron job that flushes and cleans up Y.js documents with no active connections.",
+      "acceptanceCriteria": [
+        "CleanupStaleYdocsJob checks for cached ydoc: keys with no active ActionCable subscribers on the corresponding document stream",
+        "Flushes remaining state to Git via FlushYdocToGitJob before clearing from cache",
+        "Registered in GoodJob cron as cleanup_stale_ydocs at '*/15 * * * *'",
+        "Minitest: test cleanup of stale documents, no cleanup of active documents",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 46,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-047",
+      "title": "Project settings page for member management",
+      "description": "As a project owner, I want to invite and remove members from my project.",
+      "acceptanceCriteria": [
+        "GET /projects/:slug/settings renders Projects/Settings Inertia page (only accessible to owners)",
+        "Page shows a UTable of current members with columns: Name, Email, Role (UBadge), and Remove button",
+        "Owner cannot remove themselves",
+        "'Add Member' section with email input (UInput) and role select (owner/editor), submit button",
+        "POST /projects/:slug/memberships adds a member by email (user must exist); shows error if user not found",
+        "DELETE /projects/:slug/memberships/:id removes the member",
+        "Non-owners redirected away from settings page",
+        "Minitest: test add member, remove member, owner-only access",
+        "Verify member management flows in browser",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 47,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-048",
+      "title": "User settings/profile page",
+      "description": "As a user, I want to change my name and password from a settings page.",
+      "acceptanceCriteria": [
+        "GET /settings renders Settings/Profile Inertia page",
+        "Form with UInput fields for name and email (email read-only or editable with current password confirmation)",
+        "Password change section: current password, new password, confirm new password",
+        "PATCH /settings updates user attributes via Devise",
+        "Success shows a toast notification",
+        "Validation errors displayed inline",
+        "Verify profile update works in browser",
+        "Typecheck passes"
+      ],
+      "priority": 48,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-049",
+      "title": "Git push notification to web UI users",
+      "description": "As a user editing in the web UI, I want to be notified when someone pushes changes via Git so I know to refresh.",
+      "acceptanceCriteria": [
+        "Post-receive hook or polling mechanism detects when HEAD changes on a project repo",
+        "When HEAD changes and there are active DocumentChannel subscribers for a file, broadcast a 'file_changed' message to the document stream",
+        "Frontend Files/Edit.vue listens for 'file_changed' messages and shows a UAlert or toast: 'This file was changed outside the editor. Please refresh to get the latest version.'",
+        "Verify notification appears when simulating a Git push in browser",
+        "Typecheck passes"
+      ],
+      "priority": 49,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-050",
+      "title": "Kamal deployment configuration",
+      "description": "As a developer, I need Kamal 2 configured for single-server deployment.",
+      "acceptanceCriteria": [
+        "config/deploy.yml defines service mdforge with image registry on ghcr.io",
+        "web server role: hosts list, 2GB memory limit, volume /var/repos:/var/repos",
+        "jobs server role: cmd 'bundle exec good_job start', 1GB memory limit, volume /var/repos:/var/repos",
+        "Proxy configured with ssl: true, host placeholder, app_port: 3000",
+        "Builder targets amd64 architecture",
+        "Clear env: RAILS_ENV production, RAILS_LOG_TO_STDOUT 1, GOOD_JOB_EXECUTION_MODE external, GIT_REPOS_ROOT /var/repos",
+        "Secret env: RAILS_MASTER_KEY, DATABASE_URL, CABLE_DATABASE_URL, CACHE_DATABASE_URL, QUEUE_DATABASE_URL",
+        "Accessories: postgres (postgres:18-alpine, 127.0.0.1:5432, pgdata volume), nginx (nginx:alpine, port 443, config/nginx/app.conf mount, /var/repos:ro, /etc/ssl:ro)",
+        "Typecheck passes"
+      ],
+      "priority": 50,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-051",
+      "title": "Production Dockerfile",
+      "description": "As a developer, I need a production Dockerfile that builds the Rails app with all dependencies.",
+      "acceptanceCriteria": [
+        "Multi-stage build: build stage installs Ruby gems (bundle install), Node/Yarn, and compiles assets",
+        "Runtime stage is minimal, includes libgit2 system package for Rugged",
+        "Assets precompiled with SECRET_KEY_BASE_DUMMY=1 rails assets:precompile",
+        "Final image runs as non-root user",
+        "Docker build succeeds without errors",
+        "Typecheck passes"
+      ],
+      "priority": 51,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
