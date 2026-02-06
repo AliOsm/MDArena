@@ -50,6 +50,7 @@
 - Solid Cable multi-database setup: cable databases need `migrations_paths: db/cable_migrate` to avoid inheriting primary migrations; use `schema_dump: cable_schema.rb` for schema dumps
 - ActionCable Connection `connect` method must be public — `respond_to?(:connect)` only checks public methods; if private, test framework skips calling it
 - ActionCable connection tests: use `Struct.new(:user)` for warden mock (OpenStruct requires explicit require in Ruby 3.4)
+- ActionCable channel tests need `include ActiveJob::TestHelper` for `assert_enqueued_with` — it's not included by default in `ActionCable::Channel::TestCase`
 
 ---
 
@@ -513,4 +514,34 @@
   - Test env `:null_store` cache silently discards writes — switch to `:memory_store` when features depend on `Rails.cache.read`/`write`
   - Channel test pattern: `stub_connection current_user: user` + `subscribe(params)` + check `subscription.confirmed?` / `subscription.rejected?` + `transmissions.last` for transmitted data
   - `Project#users` association checks membership efficiently — use `.include?(current_user)` for membership verification in channels
+---
+
+## 2026-02-06 - US-034
+- What was implemented: DocumentChannel receive and broadcast logic for update/save messages, and unsubscribe cleanup
+- Files changed:
+  - app/channels/document_channel.rb (added receive method handling 'update' and 'save' messages, unsubscribed callback with FlushYdocToGitJob enqueue)
+  - app/jobs/flush_ydoc_to_git_job.rb (created; placeholder for US-035 — needed for enqueue from DocumentChannel)
+  - test/channels/document_channel_test.rb (added 4 tests: update applies to cache and enqueues job, update broadcasts to stream with sender, save enqueues job, unsubscribe enqueues job; added include ActiveJob::TestHelper)
+  - prd.json (marked US-034 as passes: true)
+- **Learnings for future iterations:**
+  - `ActionCable::Channel::TestCase` does not include `ActiveJob::TestHelper` by default — must `include ActiveJob::TestHelper` explicitly to use `assert_enqueued_with`
+  - Y.js state merging pattern: read cached state, create new Y::Doc, sync with cached, sync with update bytes, write full_diff back to cache
+  - `ActionCable.server.broadcast(stream_name, data)` broadcasts to all subscribers on the stream — use sender ID to let clients filter their own updates
+  - `FlushYdocToGitJob.set(wait: 30.seconds).perform_later(...)` sets delayed execution; `.set(wait: 5.seconds)` for unsubscribe cleanup
+- GoodJob concurrency control: `include GoodJob::ActiveJobExtensions::Concurrency` + `good_job_control_concurrency_with(key: -> { ... }, total_limit: 1)` — key lambda has access to `arguments` array
+- Y.js text extraction: `doc.get_text("content").to_s` returns the plain text content from a Y::Doc
+---
+
+## 2026-02-06 - US-035
+- What was implemented: FlushYdocToGitJob — background job that flushes Y.js document state from cache to a Git commit
+- Files changed:
+  - app/jobs/flush_ydoc_to_git_job.rb (replaced placeholder with full implementation: read cache, extract Y.js text, compare with existing Git content, commit if changed)
+  - test/jobs/flush_ydoc_to_git_job_test.rb (created; 6 tests: flush creates commit, skip on no change, nil cache early return, concurrency key, new file commit, auto-save message)
+  - prd.json (marked US-035 as passes: true)
+- **Learnings for future iterations:**
+  - GoodJob concurrency control requires `include GoodJob::ActiveJobExtensions::Concurrency` mixin — not included by default in ApplicationJob
+  - `good_job_control_concurrency_with` uses a lambda for `key` — access job arguments via `arguments[0]`, `arguments[1]` etc.
+  - Y.js text extraction: `doc.get_text("content").to_s` returns the string content from a Y::Doc text type
+  - Job uses project owner as the commit author for auto-save commits — could be enhanced to track last editor
+  - `good_job_concurrency_key` method on job instance returns the computed key — useful for testing
 ---

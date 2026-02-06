@@ -593,8 +593,8 @@
         "Typecheck passes"
       ],
       "priority": 35,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "FlushYdocToGitJob reads Y.js state from cache, extracts text via Y::Doc getText('content').to_s, commits to Git via GitService.commit_file. Skips commit if content matches existing file. Uses GoodJob concurrency control with total_limit: 1 keyed by project_id:file_path. Returns early if cache state is nil. 6 tests covering flush commit, skip on no change, nil cache, concurrency key, new file, and commit message."
     },
     {
       "id": "US-036",
