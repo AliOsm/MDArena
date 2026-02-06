@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     member do
       get "/", action: :show
     end
+    resources :files, only: [ :create ], param: :path
   end
 
   namespace :settings do

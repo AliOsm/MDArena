@@ -346,3 +346,18 @@
   - Grid layout with `sm:grid-cols-2 lg:grid-cols-3` provides responsive card layout
   - Follow same modal/form pattern from Tokens.vue: ref for modal open state, ref for form value, ref for loading state, `onFinish` callback to reset
 ---
+
+## 2026-02-06 - US-023
+- What was implemented: Project show page UI with file list, file creation modal, and minimal FilesController#create
+- Files changed:
+  - app/javascript/pages/Projects/Show.vue (created; project name h1, role UBadge, clone URL code tag, file list as UButton ghost/block, empty state UAlert, UModal for file creation with auto .md extension)
+  - app/controllers/files_controller.rb (created; minimal create action with set_project scoped to current_user, auto-appends .md, commits via GitService)
+  - config/routes.rb (added nested files resource under projects for POST /projects/:project_slug/files)
+  - test/controllers/files_controller_test.rb (created; 3 tests: create + redirect, auto .md extension, auth guard)
+  - prd.json (marked US-023 as passes: true)
+- **Learnings for future iterations:**
+  - Nested routes: `resources :files, only: [:create], param: :path` inside projects block generates `project_files_path(project_slug)` helper
+  - FilesController uses `params[:project_slug]` (not `params[:slug]`) because it's a nested resource — the parent param is prefixed
+  - UButton with `block` and `class="justify-start"` creates full-width left-aligned file list items
+  - File creation modal follows same pattern as project creation: ref for modal state, form submission via router.post, onFinish to reset state
+---

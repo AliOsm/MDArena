@@ -387,8 +387,8 @@
         "Typecheck passes"
       ],
       "priority": 23,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Projects/Show.vue with project name h1, role UBadge, clone URL code tag. Files as UButton (ghost, block, justify-start, file-text icon). Empty state UAlert. UModal for file creation with auto .md extension and default content. Minimal FilesController#create action and route added for POST /projects/:slug/files."
     },
     {
       "id": "US-024",
