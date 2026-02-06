@@ -699,8 +699,8 @@
         "Typecheck passes"
       ],
       "priority": 41,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "config/nginx/app.conf created with upstream rails_app on 127.0.0.1:3000, location / proxy to Rails with standard headers, location /cable with WebSocket upgrade (HTTP/1.1, Upgrade, Connection), location ~ ^/git/ with auth_request to /internal/git/authorize and fastcgi_pass to git-http-backend with GIT_PROJECT_ROOT /var/repos and GIT_HTTP_EXPORT_ALL, internal location /internal/git/authorize proxying to /api/git/authorize with X-Original-URI and Authorization headers and no request body. client_max_body_size 50m."
     },
     {
       "id": "US-042",

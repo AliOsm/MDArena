@@ -616,3 +616,16 @@
   - Rate limit counters persist across tests when using `:memory_store` — add `Rails.cache.clear` in test `setup` to reset counters between tests
   - The `with:` option overrides the default 429 response (e.g., for redirects) — omit it for API endpoints that should return standard 429
 ---
+
+## 2026-02-06 - US-041
+- What was implemented: Nginx configuration for Git Smart HTTP with Rails proxy, WebSocket support, and git-http-backend integration
+- Files changed:
+  - config/nginx/app.conf (created; full Nginx config with upstream, Rails proxy, WebSocket /cable, Git Smart HTTP with auth_request, internal auth subrequest)
+- **Learnings for future iterations:**
+  - Nginx `auth_request` directive delegates authentication to an internal subrequest — the Rails endpoint at `/api/git/authorize` returns 200/401/403
+  - `proxy_pass_request_body off` and `Content-Length ""` are required on the auth subrequest location to avoid forwarding the Git payload to the auth endpoint
+  - `fastcgi_param GIT_HTTP_EXPORT_ALL ""` tells git-http-backend to serve all repos without checking for `git-daemon-export-ok` file
+  - `PATH_INFO /$repo_path` uses Nginx named capture `(?<repo_path>.+)` to pass the full Git path to git-http-backend
+  - WebSocket proxy requires `proxy_http_version 1.1`, `Upgrade $http_upgrade`, and `Connection "upgrade"` headers
+  - This is a config-only story with no Ruby/JS code changes — all quality checks pass without modification
+---
