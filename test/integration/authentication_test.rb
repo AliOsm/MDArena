@@ -36,7 +36,8 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
       user: { email: users(:alice).email, password: "wrongpassword" }
     }
 
-    assert_response :unprocessable_content
+    assert_response :redirect
+    assert_redirected_to new_user_session_path
   end
 
   test "user can sign out via DELETE /logout" do
@@ -61,6 +62,7 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
         user: { name: "", email: "new@example.com", password: "password123", password_confirmation: "password123" }
       }
     end
-    assert_response :unprocessable_content
+    assert_response :redirect
+    assert_redirected_to new_user_registration_path
   end
 end

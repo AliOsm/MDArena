@@ -1,7 +1,10 @@
 Rails.application.routes.draw do
-  devise_for :users
+  devise_for :users, controllers: {
+    sessions: "users/sessions",
+    registrations: "users/registrations"
+  }
   devise_scope :user do
-    delete "logout", to: "devise/sessions#destroy", as: :logout
+    delete "logout", to: "users/sessions#destroy", as: :logout
   end
 
   root "home#index"
