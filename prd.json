@@ -732,8 +732,8 @@
         "Typecheck passes"
       ],
       "priority": 43,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "PdfExportJob reads markdown from Git via GitService.read_file (force UTF-8 encoding for CommonMarker). Renders HTML via Commonmarker.to_html with table, strikethrough, tasklist extensions. Wraps in styled HTML document template with system fonts and prose styles. Generates PDF via Grover.new(html).to_pdf. Uploads to Active Storage blob with <basename>.pdf filename. Broadcasts pdf_ready notification to user:<id>:notifications channel with filename and download_url. Tests stub Grover.new via define_singleton_method. Active Storage migrations installed."
     },
     {
       "id": "US-044",

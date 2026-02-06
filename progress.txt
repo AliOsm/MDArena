@@ -56,6 +56,9 @@
 - `serialize_project` in FilesController includes `id` — needed for Action Cable channel subscription with `project_id`
 - `yCollab(ytext, null, { undoManager })` from `y-codemirror.next` — syncs CodeMirror state with Y.Text; pass `null` for awareness when cursor sharing not needed
 - Rails 8 `rate_limit to: N, within: duration` — IP-scoped by default, returns 429; uses `Rails.cache`; clear cache in test setup to reset counters
+- Rugged returns file content as ASCII-8BIT — call `.force_encoding("UTF-8")` before passing to CommonMarker
+- CommonMarker v2 API: `Commonmarker.to_html(md, options: { extension: { table: true, strikethrough: true, tasklist: true } })`
+- Grover stubbing without mocha: `Grover.define_singleton_method(:new) { |*_| OpenStruct.new(to_pdf: fake) }` with restore in `ensure`
 - API controllers for external auth: `skip_before_action :authenticate_user!` and `skip_before_action :verify_authenticity_token` — CSRF protection breaks non-browser requests
 - `PersonalAccessToken.authenticate` returns the PAT; verify `pat.user_id == user.id` to ensure token belongs to the claimed user
 
@@ -640,4 +643,21 @@
   - Use `.compact` on the options hash to strip nil values (e.g., browser_ws_endpoint in production) — Grover passes all options to Puppeteer
   - `--no-sandbox` launch arg is needed in development for Chrome in Docker container — production Chrome setup may differ
   - Rubocop `Layout/SpaceInsideArrayLiteralBrackets` enforces spaces inside array brackets in the omakase config
+---
+
+## 2026-02-06 - US-043
+- What was implemented: PdfExportJob with Active Storage and ActionCable notification for PDF generation from Markdown files
+- Files changed:
+  - app/jobs/pdf_export_job.rb (replaced placeholder with full implementation: read Git file, render CommonMarker HTML, wrap in styled template, generate PDF via Grover, upload to Active Storage, broadcast notification)
+  - test/jobs/pdf_export_job_test.rb (created; 3 tests: creates PDF blob, broadcasts pdf_ready notification, queued on pdf_export queue)
+  - db/migrate/20260206171206_create_active_storage_tables.active_storage.rb (installed Active Storage migrations)
+  - db/schema.rb (auto-generated with active_storage tables)
+- **Learnings for future iterations:**
+  - Rugged returns file content as ASCII-8BIT encoding — must call `.force_encoding("UTF-8")` before passing to CommonMarker which requires UTF-8
+  - CommonMarker v2 (Commonmarker gem) API: `Commonmarker.to_html(md, options: { extension: { table: true, strikethrough: true, tasklist: true } })` — note the class is `Commonmarker` (lowercase 'm')
+  - Grover stubbing in tests: without mocha, use `define_singleton_method(:new)` to override and restore via `ensure` block with saved `method(:new)`
+  - `ActiveSupport::Notifications.subscribed(callback, "broadcast.action_cable")` captures ActionCable broadcasts in tests — payload has `:broadcasting` and `:message` keys
+  - `ActiveStorage::Blob.create_and_upload!` creates and stores a blob in one call — use `StringIO.new(data)` as the io param
+  - `rails_blob_path(blob, disposition: "attachment", only_path: true)` generates a relative download URL for Active Storage blobs
+  - Active Storage needs `rails active_storage:install` to create migrations for blobs/attachments/variants tables
 ---
