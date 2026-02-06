@@ -47,6 +47,9 @@
 - CodeMirror 6: use `shallowRef` for EditorView, initialize in `onMounted`, use `v-show` (not `v-if`) to preserve editor when toggling views
 - Test env must set `config.active_job.queue_adapter = :test` — GoodJobAdapter doesn't support `assert_enqueued_with` and other ActiveJob test helpers
 - GoodJob dashboard: `mount GoodJob::Engine, at: "good_job"` inside `authenticate :user, ->(u) { u.admin? }` block
+- Solid Cable multi-database setup: cable databases need `migrations_paths: db/cable_migrate` to avoid inheriting primary migrations; use `schema_dump: cable_schema.rb` for schema dumps
+- ActionCable Connection `connect` method must be public — `respond_to?(:connect)` only checks public methods; if private, test framework skips calling it
+- ActionCable connection tests: use `Struct.new(:user)` for warden mock (OpenStruct requires explicit require in Ruby 3.4)
 
 ---
 
@@ -473,4 +476,23 @@
   - GoodJob dashboard is mounted via `mount GoodJob::Engine, at: "good_job"` inside an `authenticate :user` block with a lambda for admin check
   - GoodJob cron config uses string class names (e.g., `"CleanupExpiredTokensJob"`) — the class must exist at boot time
   - Placeholder jobs must be created for cron entries even if implementation comes later — otherwise GoodJob will fail to schedule them
+---
+
+## 2026-02-06 - US-032
+- What was implemented: Configured Action Cable with Solid Cable (PostgreSQL-backed) adapter for development and production, with authenticated WebSocket connections
+- Files changed:
+  - config/cable.yml (updated; solid_cable adapter for development and production, test adapter for test)
+  - config/database.yml (updated; multi-database setup with cable databases for dev/test/prod; migrations_paths and schema_dump configured)
+  - app/channels/application_cable/connection.rb (created; authenticates user from Devise warden session, rejects unauthenticated connections)
+  - app/channels/application_cable/channel.rb (created; base channel class)
+  - db/cable_migrate/.keep (created; empty migrations directory to isolate cable DB from primary migrations)
+  - test/channels/connection_test.rb (created; 2 tests: authenticated connect, unauthenticated rejection)
+  - prd.json (marked US-032 as passes: true)
+- **Learnings for future iterations:**
+  - Solid Cable uses `db/cable_schema.rb` for table setup — `db:create` auto-loads this schema, so separate migrations aren't needed for the cable table
+  - Multi-database cable setup needs `migrations_paths: db/cable_migrate` to prevent primary migrations from being applied to the cable database
+  - `schema_dump: cable_schema.rb` tells Rails to dump/load the cable schema to/from the correct file (path is relative to db/)
+  - ActionCable Connection's `connect` method must be public — the test framework checks `respond_to?(:connect)` which only matches public methods; if private, it silently skips calling connect
+  - Ruby 3.4 requires explicit `require "ostruct"` for OpenStruct — use `Struct.new(:user)` instead for warden mocking in connection tests
+  - When switching from flat to multi-db database.yml, test databases need `db:prepare` to re-initialize
 ---
