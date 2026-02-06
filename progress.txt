@@ -41,6 +41,9 @@
 - Rugged `Commit.create` requires Ruby `Time.now`, not ActiveSupport `Time.current` (TypeError: expected Time object)
 - GitService uses `refs/heads/main` as the default branch reference for all operations
 - Parallel test workers can crash with Rugged — use `PARALLEL_WORKERS=1` if segfaults occur
+- File routes with `.md` extensions need glob `*path` with `format: false` + `defaults: { format: :html }` to prevent Rails from treating `.md` as request format
+- Route helper convention for nested file routes: `project_file_path`, `project_edit_file_path`, `project_destroy_file_path` (not `edit_project_file_path`)
+- `rescue_from GitService::FileNotFoundError` with `raise ActiveRecord::RecordNotFound` to return proper 404 responses
 
 ---
 
@@ -360,4 +363,20 @@
   - FilesController uses `params[:project_slug]` (not `params[:slug]`) because it's a nested resource — the parent param is prefixed
   - UButton with `block` and `class="justify-start"` creates full-width left-aligned file list items
   - File creation modal follows same pattern as project creation: ref for modal state, form submission via router.post, onFinish to reset state
+---
+
+## 2026-02-06 - US-024
+- What was implemented: FilesController with full CRUD actions (show, edit, update, create, destroy) plus download_md and download_pdf actions
+- Files changed:
+  - app/controllers/files_controller.rb (expanded from create-only to full CRUD + download actions; added rescue_from FileNotFoundError, head_sha_for helper, serialize_project helper)
+  - config/routes.rb (added glob file routes with format: false + defaults: { format: :html } for .md extension support)
+  - app/jobs/pdf_export_job.rb (created; placeholder job for US-043 to allow enqueue from download_pdf action)
+  - test/controllers/files_controller_test.rb (expanded from 3 to 12 tests: show, show 404, non-member 404, edit, update, stale commit, create, auto .md, destroy, download_md, download_pdf enqueue, auth guard)
+  - prd.json (marked US-024 as passes: true)
+- **Learnings for future iterations:**
+  - Rails glob routes (`*path`) with `.md` file extensions: use `format: false` to prevent format extraction AND `defaults: { format: :html }` to set proper request format — otherwise Rails infers `:md` format and fails to find templates
+  - Route helpers for `scope` with `as: :project` follow `project_<action>_file_path` pattern (not `<action>_project_file_path`) — different from `resources` naming convention
+  - `rescue_from GitService::FileNotFoundError` should re-raise as `ActiveRecord::RecordNotFound` to use Rails' built-in 404 handling
+  - Place more-specific glob routes (e.g., `*path/edit`, `*path/download_md`) BEFORE the catch-all `*path` route — Rails matches first-wins for glob routes
+  - `send_data` with `disposition: :attachment` triggers browser download; the test can verify `Content-Disposition` header contains "attachment"
 ---

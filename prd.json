@@ -408,8 +408,8 @@
         "Typecheck passes"
       ],
       "priority": 24,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Glob routes with format: false and defaults: { format: :html } for proper .md extension handling. rescue_from GitService::FileNotFoundError maps to 404. Route helpers: project_file_path, project_edit_file_path, project_destroy_file_path, project_download_md_file_path, project_download_pdf_file_path. PdfExportJob placeholder created for enqueue support. 12 tests covering show, edit, update, create, destroy, download_md, download_pdf, stale commit, auth guard, and non-member access."
     },
     {
       "id": "US-025",
