@@ -23,5 +23,8 @@ module MdArena
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Git repository storage root
+    config.repos_root = ENV.fetch("GIT_REPOS_ROOT", Rails.root.join("tmp/repos").to_s)
   end
 end
