@@ -55,6 +55,9 @@
 - Base64 for Y.js in browser: encode with `btoa(String.fromCharCode(...update))`, decode with `Uint8Array.from(atob(str), c => c.charCodeAt(0))`
 - `serialize_project` in FilesController includes `id` — needed for Action Cable channel subscription with `project_id`
 - `yCollab(ytext, null, { undoManager })` from `y-codemirror.next` — syncs CodeMirror state with Y.Text; pass `null` for awareness when cursor sharing not needed
+- Rails 8 `rate_limit to: N, within: duration` — IP-scoped by default, returns 429; uses `Rails.cache`; clear cache in test setup to reset counters
+- API controllers for external auth: `skip_before_action :authenticate_user!` and `skip_before_action :verify_authenticity_token` — CSRF protection breaks non-browser requests
+- `PersonalAccessToken.authenticate` returns the PAT; verify `pat.user_id == user.id` to ensure token belongs to the claimed user
 
 ---
 
@@ -586,4 +589,30 @@
   - Use `let` for timer variable (not `ref`) since it doesn't need Vue reactivity — `setTimeout` IDs are just numbers used with `clearTimeout`
   - `toast.add({ title: "Auto-saved", color: "neutral" })` provides subtle feedback that doesn't draw attention away from editing
   - Clear timer in `onBeforeUnmount` BEFORE unsubscribing from the channel — if the timer fires during teardown, the subscription would already be null
+---
+
+## 2026-02-06 - US-039
+- What was implemented: Git HTTP auth endpoint for Nginx subrequest authentication of Git Smart HTTP operations
+- Files changed:
+  - app/controllers/api/git/authorize_controller.rb (created; Api::Git::AuthorizeController with show action, Basic Auth extraction, PAT authentication, project membership and push permission checks)
+  - config/routes.rb (added api/git/authorize route under namespace)
+  - test/controllers/api/git/authorize_controller_test.rb (created; 10 tests covering auth success, invalid token, wrong email, token/user mismatch, non-member 403, push permissions for owner/editor, last_used_at touch, missing URI)
+- **Learnings for future iterations:**
+  - API controllers that handle external auth must `skip_before_action :authenticate_user!` and `skip_before_action :verify_authenticity_token` — CSRF protection breaks non-browser requests
+  - `PersonalAccessToken.authenticate` returns the PAT record — verify `pat.user_id == user.id` to ensure the token belongs to the claimed user (not just any valid token)
+  - `update_column` bypasses callbacks and validations — ideal for touching `last_used_at` without triggering unnecessary overhead
+  - X-Original-URI header pattern for Nginx auth_request: `/git/<slug>.git/<rest>` — extract slug with regex `%r{/git/([^/]+)\.git/}`
+  - Push detection: check if URI contains `git-receive-pack` — covers both `?service=git-receive-pack` query param and POST to `/git-receive-pack` path
+---
+
+## 2026-02-06 - US-040
+- What was implemented: Added Rails built-in rate limiting to the Git HTTP auth endpoint to prevent brute force attacks
+- Files changed:
+  - app/controllers/api/git/authorize_controller.rb (added `rate_limit to: 60, within: 1.minute`)
+  - test/controllers/api/git/authorize_controller_test.rb (added rate limit test, added Rails.cache.clear in setup to reset counters between tests)
+- **Learnings for future iterations:**
+  - Rails 8 `rate_limit` is a one-liner: `rate_limit to: N, within: duration` — defaults to IP-scoped via `request.remote_ip`, returns 429 Too Many Requests
+  - Rate limit uses `Rails.cache` for storage — test env must use `:memory_store` (not `:null_store`) for rate limiting to work
+  - Rate limit counters persist across tests when using `:memory_store` — add `Rails.cache.clear` in test `setup` to reset counters between tests
+  - The `with:` option overrides the default 429 response (e.g., for redirects) — omit it for API endpoints that should return standard 429
 ---

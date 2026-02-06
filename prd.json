@@ -666,8 +666,8 @@
         "Typecheck passes"
       ],
       "priority": 39,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Api::Git::AuthorizeController at GET /api/git/authorize. Skips Devise authenticate_user! and CSRF verification. Extracts Basic Auth credentials from Authorization header. Authenticates via PersonalAccessToken.authenticate and verifies token belongs to the user. Extracts project slug from X-Original-URI header (pattern: /git/<slug>.git/...). Checks project membership, returns 403 for non-members. Push requests (git-receive-pack) allowed for owner and editor roles. Touches last_used_at on successful auth. 10 integration tests covering all auth scenarios."
     },
     {
       "id": "US-040",
@@ -682,8 +682,8 @@
         "Typecheck passes"
       ],
       "priority": 40,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added rate_limit to: 60, within: 1.minute to Api::Git::AuthorizeController. Rails 8 built-in rate_limit uses cache store and request.remote_ip by default. Returns 429 Too Many Requests when exceeded. Test clears Rails.cache in setup to reset rate limit counters between tests."
     },
     {
       "id": "US-041",
