@@ -18,6 +18,8 @@ Rails.application.routes.draw do
 
   scope "/projects/:project_slug", as: :project, format: false, defaults: { format: :html } do
     get "files/*path/edit", to: "files#edit", as: :edit_file
+    get "files/*path/history/:sha", to: "file_history#show", as: :file_history_show
+    get "files/*path/history", to: "file_history#index", as: :file_history
     get "files/*path/download_md", to: "files#download_md", as: :download_md_file
     post "files/*path/download_pdf", to: "files#download_pdf", as: :download_pdf_file
     get "files/*path", to: "files#show", as: :file
