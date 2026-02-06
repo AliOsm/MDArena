@@ -50,10 +50,32 @@ function sendUpdate(update) {
   subscription.send({ type: "update", update: base64, sender: String(currentUserId) })
 }
 
+// Auto-save timer (60 seconds of inactivity)
+let autoSaveTimer = null
+const AUTO_SAVE_DELAY = 60_000
+
+function resetAutoSaveTimer() {
+  if (autoSaveTimer) clearTimeout(autoSaveTimer)
+  autoSaveTimer = setTimeout(() => {
+    if (subscription) {
+      subscription.send({ type: "save" })
+      toast.add({ title: "Auto-saved", color: "neutral" })
+    }
+  }, AUTO_SAVE_DELAY)
+}
+
+function clearAutoSaveTimer() {
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer)
+    autoSaveTimer = null
+  }
+}
+
 // Listen for local Y.Doc updates and send to channel
 ydoc.on("update", (update, origin) => {
   if (origin !== "remote") {
     sendUpdate(update)
+    resetAutoSaveTimer()
   }
 
   // Sync editor content for preview
@@ -105,6 +127,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  clearAutoSaveTimer()
   if (subscription) {
     subscription.unsubscribe()
     subscription = null
