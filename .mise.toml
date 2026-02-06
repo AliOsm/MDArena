@@ -1,0 +1,58 @@
+[tools]
+node = "25.2.1"
+ruby = "3.4.7"
+yarn = "4.12.0"
+
+[tasks."docker:start"]
+description = "Start development Docker services"
+run = "docker compose -f dev-docker-compose.yml up -d"
+
+[tasks."docker:stop"]
+description = "Stop development Docker services"
+run = "docker compose -f dev-docker-compose.yml down"
+
+[tasks."deps"]
+description = "Install all dependencies"
+depends = ["deps:ruby", "deps:js"]
+
+[tasks."deps:ruby"]
+description = "Install Ruby dependencies"
+run = "bundle install"
+
+[tasks."deps:js"]
+description = "Install JavaScript dependencies"
+run = "yarn install"
+
+[tasks."db:prepare"]
+description = "Prepare the database"
+run = "bin/rails db:prepare"
+
+[tasks."lint"]
+description = "Run all linters"
+run = """
+set +e
+bundle exec rubocop
+rubocop_exit=$?
+yarn format:check
+format_exit=$?
+yarn lint
+lint_exit=$?
+if [ $rubocop_exit -ne 0 ] || [ $format_exit -ne 0 ] || [ $lint_exit -ne 0 ]; then
+  exit 1
+fi
+"""
+
+[tasks."test"]
+description = "Run the test suite"
+run = "CI=1 bundle exec rails test"
+
+[tasks."dev"]
+description = "Start the full development environment"
+run = """
+trap 'docker compose -f dev-docker-compose.yml down' INT TERM
+docker compose -f dev-docker-compose.yml up -d
+bundle install
+yarn install
+bin/rails db:prepare
+bin/dev
+"""

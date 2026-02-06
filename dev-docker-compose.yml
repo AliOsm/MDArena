@@ -1,16 +1,26 @@
 services:
   postgres:
-    image: postgres:18.1
+    image: postgres:18-alpine
     restart: unless-stopped
-    command: postgres -c "shared_preload_libraries=pg_stat_statements" -c "pg_stat_statements.track=all" -c "pg_stat_statements.max=10000" -c "track_activity_query_size=2048"
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql
+      - pgdata:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chromium:
+    image: browserless/chrome
+    restart: unless-stopped
+    ports:
+      - "3333:3000"
 
 volumes:
-  postgres-data:
+  pgdata:
