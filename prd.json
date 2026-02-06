@@ -574,8 +574,8 @@
         "Typecheck passes"
       ],
       "priority": 34,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "DocumentChannel receive handles 'update' (decode Base64, apply to cached Y::Doc, write back to cache, broadcast with sender, enqueue FlushYdocToGitJob with 30s delay) and 'save' (immediately enqueue FlushYdocToGitJob). Unsubscribed enqueues FlushYdocToGitJob with 5s delay. ActionCable::Channel::TestCase needs include ActiveJob::TestHelper for assert_enqueued_with."
     },
     {
       "id": "US-035",

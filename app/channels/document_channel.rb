@@ -18,11 +18,42 @@ class DocumentChannel < ApplicationCable::Channel
     transmit({ type: "sync", state: encoded })
   end
 
+  def receive(data)
+    case data["type"]
+    when "update"
+      handle_update(data)
+    when "save"
+      FlushYdocToGitJob.perform_later(@project.id, @file_path)
+    end
+  end
+
   def unsubscribed
-    # Cleanup handled in US-034
+    FlushYdocToGitJob.set(wait: 5.seconds).perform_later(@project.id, @file_path) if @project
   end
 
   private
+
+  def handle_update(data)
+    update_bytes = Base64.strict_decode64(data["update"]).unpack("C*")
+
+    # Load current state, apply update, write back
+    cached = Rails.cache.read(@cache_key)
+    doc = Y::Doc.new
+    doc.sync(cached) if cached
+    doc.sync(update_bytes)
+
+    Rails.cache.write(@cache_key, doc.full_diff, expires_in: 2.hours)
+
+    # Broadcast to all subscribers with sender ID
+    ActionCable.server.broadcast(@stream_name, {
+      type: "update",
+      update: data["update"],
+      sender: data["sender"]
+    })
+
+    # Enqueue flush with 30-second delay
+    FlushYdocToGitJob.set(wait: 30.seconds).perform_later(@project.id, @file_path)
+  end
 
   def load_or_init_ydoc
     cached = Rails.cache.read(@cache_key)

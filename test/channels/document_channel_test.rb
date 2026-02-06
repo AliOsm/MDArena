@@ -1,6 +1,8 @@
 require "test_helper"
 
 class DocumentChannelTest < ActionCable::Channel::TestCase
+  include ActiveJob::TestHelper
+
   setup do
     @project = projects(:alpha)
     @user = users(:alice)
@@ -118,5 +120,66 @@ class DocumentChannelTest < ActionCable::Channel::TestCase
     text = doc.get_text("content")
 
     assert_equal "# Hello", text.to_s
+  end
+
+  test "update message applies to cached state and broadcasts" do
+    subscribe(project_id: @project.id, file_path: @file_path)
+
+    # Create an update by modifying a Y::Doc
+    update_doc = Y::Doc.new
+    # Sync with initial state first
+    initial_state = Rails.cache.read("ydoc:#{@project.id}:#{@file_path}")
+    update_doc.sync(initial_state)
+    update_text = update_doc.get_text("content")
+    update_text.insert(update_text.length, " World")
+    update_bytes = update_doc.full_diff
+
+    encoded_update = Base64.strict_encode64(update_bytes.pack("C*"))
+
+    assert_enqueued_with(job: FlushYdocToGitJob) do
+      perform :receive, { "type" => "update", "update" => encoded_update, "sender" => "user-123" }
+    end
+
+    # Verify cached state was updated
+    cached = Rails.cache.read("ydoc:#{@project.id}:#{@file_path}")
+    verify_doc = Y::Doc.new
+    verify_doc.sync(cached)
+
+    assert_includes verify_doc.get_text("content").to_s, "World"
+  end
+
+  test "update message broadcasts to stream with sender" do
+    subscribe(project_id: @project.id, file_path: @file_path)
+
+    update_doc = Y::Doc.new
+    initial_state = Rails.cache.read("ydoc:#{@project.id}:#{@file_path}")
+    update_doc.sync(initial_state)
+    update_text = update_doc.get_text("content")
+    update_text.insert(update_text.length, " Test")
+    encoded_update = Base64.strict_encode64(update_doc.full_diff.pack("C*"))
+
+    assert_broadcast_on("document:#{@project.id}:#{@file_path}", {
+      type: "update",
+      update: encoded_update,
+      sender: "user-456"
+    }) do
+      perform :receive, { "type" => "update", "update" => encoded_update, "sender" => "user-456" }
+    end
+  end
+
+  test "save message enqueues FlushYdocToGitJob" do
+    subscribe(project_id: @project.id, file_path: @file_path)
+
+    assert_enqueued_with(job: FlushYdocToGitJob, args: [ @project.id, @file_path ]) do
+      perform :receive, { "type" => "save" }
+    end
+  end
+
+  test "unsubscribe enqueues FlushYdocToGitJob with delay" do
+    subscribe(project_id: @project.id, file_path: @file_path)
+
+    assert_enqueued_with(job: FlushYdocToGitJob, args: [ @project.id, @file_path ]) do
+      unsubscribe
+    end
   end
 end
