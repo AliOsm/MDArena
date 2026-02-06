@@ -869,8 +869,8 @@
         "Typecheck passes"
       ],
       "priority": 51,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Updated scaffolded Dockerfile: added libgit2-1.9 runtime package in base stage for Rugged, added cmake and libgit2-dev in build stage for native extension compilation, added .yarnrc.yml to yarn install COPY step, set BUNDLE_WITHOUT to development:test. Multi-stage build with non-root user preserved from scaffold."
     }
   ]
 }

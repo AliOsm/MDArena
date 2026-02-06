@@ -772,3 +772,16 @@
   - `proxy.app_port: 3000` tells Kamal's proxy which port the Rails app listens on
   - This is a config-only story with no Ruby/JS code changes — all quality checks pass without modification
 ---
+
+## 2026-02-06 - US-051
+- What was implemented: Updated production Dockerfile with libgit2 system package for Rugged and proper dependency management
+- Files changed:
+  - Dockerfile (added libgit2-1.9 to runtime base, added cmake + libgit2-dev to build stage, added .yarnrc.yml to COPY, set BUNDLE_WITHOUT=development:test)
+  - prd.json (marked US-051 as passes: true)
+- **Learnings for future iterations:**
+  - Ruby 3.4.7-slim (Debian Trixie) has `libgit2-1.9` as the runtime library and `libgit2-dev` as the development headers package
+  - Rugged gem needs `cmake` in the build stage to compile its bundled libgit2 native extension
+  - `.yarnrc.yml` must be copied alongside `package.json` and `yarn.lock` for `yarn install --immutable` to use the correct `nodeLinker: node-modules` setting
+  - `BUNDLE_WITHOUT` should be `development:test` (colon-separated) to exclude both groups in production
+  - The scaffolded Rails Dockerfile already has most production best practices (multi-stage, jemalloc, non-root user, bootsnap precompile) — minimal changes needed
+---
