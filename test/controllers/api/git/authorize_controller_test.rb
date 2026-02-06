@@ -2,6 +2,8 @@ require "test_helper"
 
 class Api::Git::AuthorizeControllerTest < ActionDispatch::IntegrationTest
   setup do
+    Rails.cache.clear
+
     @alice = users(:alice)
     @bob = users(:bob)
     @alpha = projects(:alpha)
@@ -77,6 +79,20 @@ class Api::Git::AuthorizeControllerTest < ActionDispatch::IntegrationTest
     get api_git_authorize_path, headers: { "Authorization" => "Basic #{credentials}" }
 
     assert_response :bad_request
+  end
+
+  test "returns 429 when rate limit exceeded" do
+    headers = auth_headers(@alice.email, @plain_token, read_uri(@alpha.slug))
+
+    60.times do
+      get api_git_authorize_path, headers: headers
+
+      assert_response :ok
+    end
+
+    get api_git_authorize_path, headers: headers
+
+    assert_response :too_many_requests
   end
 
   private

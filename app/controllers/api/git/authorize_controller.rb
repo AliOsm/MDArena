@@ -4,6 +4,8 @@ module Api
       skip_before_action :authenticate_user!
       skip_before_action :verify_authenticity_token
 
+      rate_limit to: 60, within: 1.minute
+
       def show
         email, token = extract_basic_auth_credentials
         return head :unauthorized unless email && token
