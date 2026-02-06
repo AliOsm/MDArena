@@ -474,8 +474,8 @@
         "Typecheck passes"
       ],
       "priority": 28,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "FileHistoryController with index (file_history array) and show (file_content_at specific SHA) actions. Routes: GET /projects/:slug/files/:path/history and GET /projects/:slug/files/:path/history/:sha. Scoped to current_user.projects. 7 integration tests covering index, show, non-member 404, invalid SHA 404, and auth guard."
     },
     {
       "id": "US-029",
@@ -490,8 +490,8 @@
         "Typecheck passes"
       ],
       "priority": 29,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Files/History.vue with UTable (columns: Commit SHA in UBadge code tag, Message, Author, Date, View action button). Each View button links to /projects/:slug/files/:path/history/:sha. Empty history shows UAlert with history icon. Back to file UButton links to file show page. Breadcrumb navigation to project and file."
     },
     {
       "id": "US-030",

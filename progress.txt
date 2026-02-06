@@ -418,3 +418,28 @@
   - CM editor styling: use `[&_.cm-editor]` Tailwind arbitrary selector to target the inner editor element for min-height/outline
   - `router.patch` requires the content as a plain object param, not FormData — Inertia handles serialization
 ---
+
+## 2026-02-06 - US-028
+- What was implemented: FileHistoryController with index and show actions for viewing file commit history and file content at specific commits
+- Files changed:
+  - app/controllers/file_history_controller.rb (created; index renders Files/History with history array, show renders Files/HistoryShow with content at SHA)
+  - config/routes.rb (added file history routes: GET .../files/:path/history and GET .../files/:path/history/:sha)
+  - test/controllers/file_history_controller_test.rb (created; 7 tests: index, multiple commits, non-member 404, show at SHA, invalid SHA 404, file at commit, auth guard)
+- **Learnings for future iterations:**
+  - History routes must be placed BEFORE the catch-all `files/*path` route in the glob scope — Rails matches first-wins
+  - FileHistoryController follows same pattern as FilesController: set_project scoped to current_user.projects, rescue_from FileNotFoundError
+  - Time serialization: use `.iso8601` on Ruby Time objects for consistent JSON format in Inertia props
+  - Route helpers: `project_file_history_path(slug, path)` and `project_file_history_show_path(slug, path, sha)`
+---
+
+## 2026-02-06 - US-029
+- What was implemented: File history UI page (Files/History.vue) with UTable for commit history display
+- Files changed:
+  - app/javascript/pages/Files/History.vue (created; UTable with Commit SHA in UBadge, Message, Author, Date columns, View action button; empty state UAlert; breadcrumb navigation; Back to file button)
+  - prd.json (marked US-029 as passes: true)
+- **Learnings for future iterations:**
+  - UTable follows the same `columns` + `#<key>-cell` slot pattern used in Tokens.vue — reuse this pattern for all table pages
+  - History entries from the backend have `author` as a nested object with `name` and `email` — access via `row.author.name`
+  - Breadcrumb pattern: chain UButton (variant="link") elements with `/` separators for file navigation hierarchy
+  - `row.sha.slice(0, 8)` provides the standard short SHA display in a UBadge with code tag
+---
