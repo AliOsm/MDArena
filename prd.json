@@ -424,8 +424,8 @@
         "Typecheck passes"
       ],
       "priority": 25,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "MarkdownPreview.vue component using markdown-it with html:false, linkify:true, typographer:true. Renders via v-html with prose prose-sm max-w-none dark:prose-invert Tailwind classes."
     },
     {
       "id": "US-026",
@@ -441,8 +441,8 @@
         "Typecheck passes"
       ],
       "priority": 26,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Files/Show.vue with file path heading, MarkdownPreview component, action buttons (Edit, History, Download MD, Download PDF). Download MD uses anchor tag to GET endpoint. Download PDF uses router.post with toast notification via useToast()."
     },
     {
       "id": "US-027",

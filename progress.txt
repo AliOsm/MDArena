@@ -380,3 +380,26 @@
   - Place more-specific glob routes (e.g., `*path/edit`, `*path/download_md`) BEFORE the catch-all `*path` route — Rails matches first-wins for glob routes
   - `send_data` with `disposition: :attachment` triggers browser download; the test can verify `Content-Disposition` header contains "attachment"
 ---
+
+## 2026-02-06 - US-025
+- What was implemented: MarkdownPreview Vue component for rendering Markdown content
+- Files changed:
+  - app/javascript/components/MarkdownPreview.vue (created; accepts content prop, renders via markdown-it with v-html, Tailwind prose classes)
+- **Learnings for future iterations:**
+  - markdown-it instance can be created at module level (outside setup) since it's stateless — but keeping it in `<script setup>` is fine for simplicity
+  - Tailwind `prose` classes from `@tailwindcss/typography` handle headings, lists, code blocks, links, blockquotes, and tables out of the box
+  - `dark:prose-invert` handles dark mode for prose content automatically
+  - Component uses `v-html` directive for rendered HTML — markdown-it `html: false` ensures user HTML is escaped for safety
+---
+
+## 2026-02-06 - US-026
+- What was implemented: File show page UI (Files/Show.vue) with markdown preview and action buttons
+- Files changed:
+  - app/javascript/pages/Files/Show.vue (created; file path heading, breadcrumb to project, MarkdownPreview component, Edit/History/Download MD/Download PDF buttons)
+  - prd.json (marked US-026 as passes: true)
+- **Learnings for future iterations:**
+  - UButton with `tag="a"` and `:href` renders a plain anchor element for direct download links (no Inertia navigation)
+  - `useToast()` is auto-imported by Nuxt UI unplugin — no explicit import needed in `<script setup>`
+  - Download PDF uses `router.post` with `preserveScroll: true` to avoid page jump, then shows success toast on `onSuccess` callback
+  - Route pattern for file actions: `/projects/${project.slug}/files/${path}/<action>` — matches the glob route definitions in routes.rb
+---
