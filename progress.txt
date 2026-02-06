@@ -629,3 +629,15 @@
   - WebSocket proxy requires `proxy_http_version 1.1`, `Upgrade $http_upgrade`, and `Connection "upgrade"` headers
   - This is a config-only story with no Ruby/JS code changes — all quality checks pass without modification
 ---
+
+## 2026-02-06 - US-042
+- What was implemented: Configured Grover PDF generation initializer with A4 format, margins, print_background, and development-specific browser settings
+- Files changed:
+  - config/initializers/grover.rb (created; Grover.configure with format A4, margins 1cm/1.5cm, print_background true, development launch_args and browser_ws_endpoint)
+- **Learnings for future iterations:**
+  - Grover initializer uses `Grover.configure` block with `config.options` hash for global PDF settings
+  - Development browser_ws_endpoint `ws://localhost:3333` connects to browserless/chrome Docker container (port 3333:3000 in dev-docker-compose.yml)
+  - Use `.compact` on the options hash to strip nil values (e.g., browser_ws_endpoint in production) — Grover passes all options to Puppeteer
+  - `--no-sandbox` launch arg is needed in development for Chrome in Docker container — production Chrome setup may differ
+  - Rubocop `Layout/SpaceInsideArrayLiteralBrackets` enforces spaces inside array brackets in the omakase config
+---

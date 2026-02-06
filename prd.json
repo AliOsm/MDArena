@@ -712,8 +712,8 @@
         "Typecheck passes"
       ],
       "priority": 42,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Grover initializer at config/initializers/grover.rb. Format A4, margins 1cm/1.5cm, print_background true. Development uses launch_args ['--no-sandbox'] and browser_ws_endpoint 'ws://localhost:3333' pointing to browserless/chrome Docker container. Production uses compact to strip nil values."
     },
     {
       "id": "US-043",
