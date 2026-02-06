@@ -46,7 +46,17 @@ function createFile() {
           variant="subtle"
         />
       </div>
-      <UButton icon="i-lucide-plus" label="New File" @click="showCreateModal = true" />
+      <div class="flex gap-2">
+        <UButton
+          v-if="project.role === 'owner'"
+          icon="i-lucide-settings"
+          label="Settings"
+          color="neutral"
+          variant="ghost"
+          @click="router.visit(`/projects/${project.slug}/settings`)"
+        />
+        <UButton icon="i-lucide-plus" label="New File" @click="showCreateModal = true" />
+      </div>
     </div>
 
     <div class="mb-6">

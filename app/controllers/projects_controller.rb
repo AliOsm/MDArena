@@ -1,5 +1,6 @@
 class ProjectsController < ApplicationController
-  before_action :set_project, only: :show
+  before_action :set_project, only: [ :show, :settings ]
+  before_action :require_owner, only: :settings
 
   def index
     projects = current_user.projects.includes(:owner).order(updated_at: :desc)
@@ -13,6 +14,14 @@ class ProjectsController < ApplicationController
     render inertia: "Projects/Show", props: {
       project: serialize_project(@project),
       files: files
+    }
+  end
+
+  def settings
+    members = @project.memberships.includes(:user).order(:created_at)
+    render inertia: "Projects/Settings", props: {
+      project: serialize_project(@project),
+      members: members.map { |m| serialize_membership(m) }
     }
   end
 
@@ -32,6 +41,23 @@ class ProjectsController < ApplicationController
 
   def set_project
     @project = current_user.projects.find_by!(slug: params[:slug])
+  end
+
+  def require_owner
+    membership = @project.memberships.find_by(user: current_user)
+    return if membership&.role == "owner"
+
+    redirect_to project_path(@project.slug), alert: "Only project owners can manage settings."
+  end
+
+  def serialize_membership(membership)
+    {
+      id: membership.id,
+      userName: membership.user.name,
+      userEmail: membership.user.email,
+      role: membership.role,
+      createdAt: membership.created_at
+    }
   end
 
   def serialize_project(project)

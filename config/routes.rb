@@ -16,8 +16,10 @@ Rails.application.routes.draw do
   resources :projects, only: [ :index, :create ], param: :slug do
     member do
       get "/", action: :show
+      get "settings", action: :settings
     end
     resources :files, only: [ :create ], param: :path
+    resources :memberships, controller: "project_memberships", only: [ :create, :destroy ]
   end
 
   scope "/projects/:project_slug", as: :project, format: false, defaults: { format: :html } do
