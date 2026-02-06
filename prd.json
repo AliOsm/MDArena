@@ -780,8 +780,8 @@
         "Typecheck passes"
       ],
       "priority": 46,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "CleanupStaleYdocsJob uses cache-based registry pattern: 'active_ydocs' Set tracks currently subscribed documents, 'all_ydoc_keys' Set tracks all known ydoc cache keys. DocumentChannel register/deregister on subscribe/unsubscribe. Job computes stale keys (all - active), flushes each via FlushYdocToGitJob.perform_now, deletes from cache, and updates registry. Already registered in GoodJob cron as cleanup_stale_ydocs at '*/15 * * * *'. 4 tests covering stale flush, active preservation, registry cleanup, and empty registry."
     },
     {
       "id": "US-047",

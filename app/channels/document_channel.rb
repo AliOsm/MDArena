@@ -12,6 +12,7 @@ class DocumentChannel < ApplicationCable::Channel
     @cache_key = "ydoc:#{@project.id}:#{@file_path}"
 
     stream_from @stream_name
+    register_active_ydoc
 
     state = load_or_init_ydoc
     encoded = Base64.strict_encode64(state.pack("C*"))
@@ -28,10 +29,29 @@ class DocumentChannel < ApplicationCable::Channel
   end
 
   def unsubscribed
-    FlushYdocToGitJob.set(wait: 5.seconds).perform_later(@project.id, @file_path) if @project
+    return unless @project
+
+    deregister_active_ydoc
+    FlushYdocToGitJob.set(wait: 5.seconds).perform_later(@project.id, @file_path)
   end
 
   private
+
+  def register_active_ydoc
+    active = Rails.cache.read("active_ydocs") || Set.new
+    active.add(@cache_key)
+    Rails.cache.write("active_ydocs", active)
+
+    all_keys = Rails.cache.read("all_ydoc_keys") || Set.new
+    all_keys.add(@cache_key)
+    Rails.cache.write("all_ydoc_keys", all_keys)
+  end
+
+  def deregister_active_ydoc
+    active = Rails.cache.read("active_ydocs") || Set.new
+    active.delete(@cache_key)
+    Rails.cache.write("active_ydocs", active)
+  end
 
   def handle_update(data)
     update_bytes = Base64.strict_decode64(data["update"]).unpack("C*")

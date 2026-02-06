@@ -62,6 +62,7 @@
 - API controllers for external auth: `skip_before_action :authenticate_user!` and `skip_before_action :verify_authenticity_token` — CSRF protection breaks non-browser requests
 - `PersonalAccessToken.authenticate` returns the PAT; verify `pat.user_id == user.id` to ensure token belongs to the claimed user
 - ActionCable test `assert_no_streams` takes ZERO arguments — it checks for no streams at all; use `assert_has_stream "name"` for positive stream checks only
+- ActionCable has no public API for subscriber introspection — use cache-based registry (Set stored at `active_ydocs` key) to track active document subscriptions; maintain `all_ydoc_keys` Set for key enumeration since Solid Cache doesn't support pattern matching
 
 ---
 
@@ -689,4 +690,18 @@
   - `delete_all` is more efficient than `destroy_all` for cleanup jobs — no callbacks or instantiation needed for simple token deletion
   - When testing deletion jobs with fixtures, be aware that multiple fixture records may match the deletion criteria — avoid `assert_difference` with hardcoded counts when other fixtures are also affected
   - ActiveRecord `.or()` method chains nicely for combining deletion conditions: `where("expires_at < ?", Time.current).or(where("revoked_at < ?", 30.days.ago))`
+---
+
+## 2026-02-06 - US-046
+- What was implemented: CleanupStaleYdocsJob — flushes and cleans up Y.js documents with no active ActionCable connections
+- Files changed:
+  - app/jobs/cleanup_stale_ydocs_job.rb (replaced placeholder with implementation: reads active_ydocs and all_ydoc_keys registries from cache, computes stale keys, flushes each via FlushYdocToGitJob, deletes from cache, updates registry)
+  - app/channels/document_channel.rb (added register_active_ydoc and deregister_active_ydoc methods; subscribe registers in both active_ydocs and all_ydoc_keys Sets; unsubscribe deregisters from active_ydocs)
+  - test/jobs/cleanup_stale_ydocs_job_test.rb (created; 4 tests: stale flush + cache clear, active preservation, registry cleanup, empty registry handling)
+  - prd.json (marked US-046 as passes: true)
+- **Learnings for future iterations:**
+  - ActionCable has no public API to check active subscribers on a stream — use cache-based registry pattern instead (Set of active cache keys)
+  - Solid Cache doesn't support pattern enumeration (delete_matched) — need explicit key registry (all_ydoc_keys Set) to track known ydoc cache keys
+  - Test data for Y.js cache entries must be valid Y::Doc state (use doc.full_diff) — arbitrary byte arrays cause "cannot decode update: EndOfBuffer" errors in FlushYdocToGitJob
+  - DocumentChannel subscribe/unsubscribe lifecycle hooks are the right place to maintain the active ydocs registry
 ---
