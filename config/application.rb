@@ -26,5 +26,8 @@ module MdArena
 
     # Git repository storage root
     config.repos_root = ENV.fetch("GIT_REPOS_ROOT", Rails.root.join("tmp/repos").to_s)
+
+    # Active Job backend
+    config.active_job.queue_adapter = :good_job
   end
 end

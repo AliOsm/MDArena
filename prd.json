@@ -522,8 +522,8 @@
         "Typecheck passes"
       ],
       "priority": 31,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "GoodJob configured with async execution mode, queues default:5;pdf_export:2, max_threads 7, poll_interval 5, shutdown_timeout 25. Cron entries for cleanup_expired_tokens (daily 3 AM) and cleanup_stale_ydocs (every 15 min). Dashboard mounted at /good_job behind admin auth. Test env uses :test adapter for Active Job assertions. Placeholder jobs created for cron entries."
     },
     {
       "id": "US-032",

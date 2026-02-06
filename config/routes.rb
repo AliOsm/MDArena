@@ -7,6 +7,10 @@ Rails.application.routes.draw do
     delete "logout", to: "users/sessions#destroy", as: :logout
   end
 
+  authenticate :user, ->(user) { user.admin? } do
+    mount GoodJob::Engine, at: "good_job"
+  end
+
   root "home#index"
 
   resources :projects, only: [ :index, :create ], param: :slug do

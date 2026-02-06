@@ -45,6 +45,8 @@
 - Route helper convention for nested file routes: `project_file_path`, `project_edit_file_path`, `project_destroy_file_path` (not `edit_project_file_path`)
 - `rescue_from GitService::FileNotFoundError` with `raise ActiveRecord::RecordNotFound` to return proper 404 responses
 - CodeMirror 6: use `shallowRef` for EditorView, initialize in `onMounted`, use `v-show` (not `v-if`) to preserve editor when toggling views
+- Test env must set `config.active_job.queue_adapter = :test` — GoodJobAdapter doesn't support `assert_enqueued_with` and other ActiveJob test helpers
+- GoodJob dashboard: `mount GoodJob::Engine, at: "good_job"` inside `authenticate :user, ->(u) { u.admin? }` block
 
 ---
 
@@ -453,4 +455,22 @@
   - HistoryShow page follows the same layout pattern as Files/Show.vue — breadcrumb nav, heading, content in bordered card
   - The backend (FileHistoryController#show) already existed from US-028 — only the Vue page was needed
   - Reuse MarkdownPreview component for any page that renders markdown content — consistent rendering across show, edit preview, and history views
+---
+
+## 2026-02-06 - US-031
+- What was implemented: Configured GoodJob as Active Job backend with async execution, queue configuration, cron jobs, and admin dashboard
+- Files changed:
+  - config/application.rb (added config.active_job.queue_adapter = :good_job)
+  - config/initializers/good_job.rb (created; execution_mode: :async, queues, max_threads, poll_interval, shutdown_timeout, enable_cron, cron entries for cleanup_expired_tokens and cleanup_stale_ydocs)
+  - config/routes.rb (added GoodJob::Engine mount at /good_job behind admin auth)
+  - config/environments/test.rb (added config.active_job.queue_adapter = :test for test assertions)
+  - app/jobs/cleanup_expired_tokens_job.rb (created; placeholder for US-045)
+  - app/jobs/cleanup_stale_ydocs_job.rb (created; placeholder for US-046)
+  - test/jobs/good_job_configuration_test.rb (created; 3 tests: adapter config, job enqueue, pdf queue name)
+  - prd.json (marked US-031 as passes: true)
+- **Learnings for future iterations:**
+  - Test environment must override `config.active_job.queue_adapter = :test` to use `assert_enqueued_with` and other ActiveJob test helpers — GoodJobAdapter doesn't support them
+  - GoodJob dashboard is mounted via `mount GoodJob::Engine, at: "good_job"` inside an `authenticate :user` block with a lambda for admin check
+  - GoodJob cron config uses string class names (e.g., `"CleanupExpiredTokensJob"`) — the class must exist at boot time
+  - Placeholder jobs must be created for cron entries even if implementation comes later — otherwise GoodJob will fail to schedule them
 ---
