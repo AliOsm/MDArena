@@ -133,4 +133,87 @@ class GitServiceTest < ActiveSupport::TestCase
 
     assert executed
   end
+
+  test "delete_file removes file and creates commit" do
+    GitService.init_repo(@project)
+    GitService.commit_file(project: @project, path: "README.md", content: "# Hello", user: @user, message: "Add readme")
+    GitService.commit_file(project: @project, path: "docs/guide.md", content: "# Guide", user: @user, message: "Add guide")
+
+    GitService.delete_file(project: @project, path: "README.md", user: @user, message: "Delete readme")
+
+    assert_equal %w[docs/guide.md], GitService.list_files(@project)
+  end
+
+  test "delete_file raises FileNotFoundError for missing file" do
+    GitService.init_repo(@project)
+    GitService.commit_file(project: @project, path: "README.md", content: "# Hello", user: @user, message: "Add readme")
+
+    assert_raises(GitService::FileNotFoundError) do
+      GitService.delete_file(project: @project, path: "nonexistent.md", user: @user, message: "Delete missing")
+    end
+  end
+
+  test "delete_file raises FileNotFoundError for empty repo" do
+    GitService.init_repo(@project)
+
+    assert_raises(GitService::FileNotFoundError) do
+      GitService.delete_file(project: @project, path: "README.md", user: @user, message: "Delete from empty")
+    end
+  end
+
+  test "file_history returns commits that touched the file" do
+    GitService.init_repo(@project)
+    GitService.commit_file(project: @project, path: "README.md", content: "v1", user: @user, message: "Create readme")
+    GitService.commit_file(project: @project, path: "other.md", content: "other", user: @user, message: "Add other file")
+    GitService.commit_file(project: @project, path: "README.md", content: "v2", user: @user, message: "Update readme")
+
+    history = GitService.file_history(@project, "README.md")
+
+    assert_equal 2, history.length
+    assert_equal "Update readme", history.first[:message]
+    assert_equal "Create readme", history.last[:message]
+  end
+
+  test "file_history entries include sha and author info" do
+    GitService.init_repo(@project)
+    GitService.commit_file(project: @project, path: "README.md", content: "v1", user: @user, message: "Create readme")
+
+    entry = GitService.file_history(@project, "README.md").first
+
+    assert_match(/\A[0-9a-f]{40}\z/, entry[:sha])
+    assert_equal({ name: @user.name, email: @user.email }, entry[:author])
+    assert_instance_of Time, entry[:time]
+  end
+
+  test "file_history returns empty array for empty repo" do
+    GitService.init_repo(@project)
+
+    assert_empty GitService.file_history(@project, "README.md")
+  end
+
+  test "file_content_at returns content at a specific commit" do
+    GitService.init_repo(@project)
+    sha1 = GitService.commit_file(project: @project, path: "README.md", content: "v1", user: @user, message: "v1")
+    GitService.commit_file(project: @project, path: "README.md", content: "v2", user: @user, message: "v2")
+
+    assert_equal "v1", GitService.file_content_at(@project, "README.md", sha1)
+  end
+
+  test "file_content_at raises FileNotFoundError for missing file at commit" do
+    GitService.init_repo(@project)
+    sha = GitService.commit_file(project: @project, path: "README.md", content: "v1", user: @user, message: "v1")
+
+    assert_raises(GitService::FileNotFoundError) do
+      GitService.file_content_at(@project, "nonexistent.md", sha)
+    end
+  end
+
+  test "file_content_at raises FileNotFoundError for invalid sha" do
+    GitService.init_repo(@project)
+    GitService.commit_file(project: @project, path: "README.md", content: "v1", user: @user, message: "v1")
+
+    assert_raises(GitService::FileNotFoundError) do
+      GitService.file_content_at(@project, "README.md", "0000000000000000000000000000000000000000")
+    end
+  end
 end

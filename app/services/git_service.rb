@@ -77,6 +77,76 @@ class GitService
     []
   end
 
+  def self.file_history(project, path)
+    repo = Rugged::Repository.new(repo_path(project))
+    ref = repo.references["refs/heads/main"]
+    return [] unless ref
+
+    commits = []
+    walker = Rugged::Walker.new(repo)
+    walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_DATE)
+    walker.push(ref.target.oid)
+
+    walker.each do |commit|
+      parent = commit.parents.first
+      current_oid = blob_oid_at(commit.tree, path)
+      parent_oid = parent ? blob_oid_at(parent.tree, path) : nil
+
+      next if current_oid.nil?
+      next if current_oid == parent_oid
+
+      commits << {
+        sha: commit.oid,
+        message: commit.message,
+        author: { name: commit.author[:name], email: commit.author[:email] },
+        time: commit.author[:time]
+      }
+    end
+
+    commits
+  end
+
+  def self.delete_file(project:, path:, user:, message:)
+    with_repo_lock(project) do
+      repo = Rugged::Repository.new(repo_path(project))
+      ref = repo.references["refs/heads/main"]
+      raise FileNotFoundError, "Repository has no commits" unless ref
+
+      current_tree = ref.target.tree
+      begin
+        current_tree.path(path)
+      rescue Rugged::TreeError
+        raise FileNotFoundError, "File not found: #{path}"
+      end
+
+      index = Rugged::Index.new
+      index.read_tree(current_tree)
+      index.remove(path)
+      tree_oid = index.write_tree(repo)
+
+      author = { name: user.name, email: user.email, time: Time.now }
+
+      Rugged::Commit.create(repo,
+        tree: tree_oid,
+        author: author,
+        committer: author,
+        message: message,
+        parents: [ ref.target ],
+        update_ref: "refs/heads/main")
+    end
+  end
+
+  def self.file_content_at(project, path, sha)
+    repo = Rugged::Repository.new(repo_path(project))
+    commit = repo.lookup(sha)
+    entry = commit.tree.path(path)
+    repo.lookup(entry[:oid]).content
+  rescue Rugged::TreeError
+    raise FileNotFoundError, "File not found: #{path} at #{sha}"
+  rescue Rugged::OdbError, Rugged::InvalidError
+    raise FileNotFoundError, "Commit not found: #{sha}"
+  end
+
   def self.resolve_commit(repo, ref)
     if ref == "HEAD"
       repo.references["refs/heads/main"]&.target || repo.head.target
@@ -85,5 +155,11 @@ class GitService
     end
   end
 
-  private_class_method :resolve_commit
+  def self.blob_oid_at(tree, path)
+    tree.path(path)[:oid]
+  rescue Rugged::TreeError
+    nil
+  end
+
+  private_class_method :resolve_commit, :blob_oid_at
 end
