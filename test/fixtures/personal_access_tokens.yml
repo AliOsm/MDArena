@@ -1,0 +1,23 @@
+<% active_val = SecureRandom.base58(24) %>
+active_token:
+  user: alice
+  name: My Token
+  token_digest: <%= Digest::SHA256.hexdigest(active_val) %>
+  token_prefix: <%= active_val[0, 8] %>
+  expires_at: <%= 30.days.from_now.to_fs(:db) %>
+
+<% revoked_val = SecureRandom.base58(24) %>
+revoked_token:
+  user: alice
+  name: Revoked Token
+  token_digest: <%= Digest::SHA256.hexdigest(revoked_val) %>
+  token_prefix: <%= revoked_val[0, 8] %>
+  revoked_at: <%= 1.day.ago.to_fs(:db) %>
+
+<% expired_val = SecureRandom.base58(24) %>
+expired_token:
+  user: bob
+  name: Expired Token
+  token_digest: <%= Digest::SHA256.hexdigest(expired_val) %>
+  token_prefix: <%= expired_val[0, 8] %>
+  expires_at: <%= 1.day.ago.to_fs(:db) %>
