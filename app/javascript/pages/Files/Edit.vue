@@ -1,9 +1,11 @@
 <script setup>
-import { ref, shallowRef, onMounted, onBeforeUnmount, computed } from "vue"
+import { ref, shallowRef, onMounted, onBeforeUnmount } from "vue"
 import { usePage, router } from "@inertiajs/vue3"
 import { EditorState } from "@codemirror/state"
 import { EditorView, basicSetup } from "codemirror"
 import { markdown } from "@codemirror/lang-markdown"
+import * as Y from "yjs"
+import { createConsumer } from "@rails/actioncable"
 import MarkdownPreview from "@/components/MarkdownPreview.vue"
 
 const page = usePage()
@@ -11,6 +13,7 @@ const project = page.props.project
 const path = page.props.path
 const initialContent = page.props.content
 const headSha = page.props.headSha
+const currentUserId = page.props.currentUser.id
 
 const toast = useToast()
 
@@ -18,10 +21,46 @@ const editorContainer = ref(null)
 const editorView = shallowRef(null)
 const showPreview = ref(false)
 const saving = ref(false)
-const connected = ref(true)
+const connectionStatus = ref("connecting")
 const editorContent = ref(initialContent || "")
 
+// Y.js setup
+const ydoc = new Y.Doc()
+const ytext = ydoc.getText("content")
+const undoManager = new Y.UndoManager(ytext)
+
+// Action Cable
+let subscription = null
+const consumer = createConsumer()
+
+function applyRemoteUpdate(base64Update) {
+  const bytes = Uint8Array.from(atob(base64Update), (c) => c.charCodeAt(0))
+  Y.applyUpdate(ydoc, bytes)
+}
+
+function applyRemoteState(base64State) {
+  const bytes = Uint8Array.from(atob(base64State), (c) => c.charCodeAt(0))
+  Y.applyUpdate(ydoc, bytes)
+}
+
+function sendUpdate(update) {
+  if (!subscription) return
+  const base64 = btoa(String.fromCharCode(...update))
+  subscription.send({ type: "update", update: base64, sender: String(currentUserId) })
+}
+
+// Listen for local Y.Doc updates and send to channel
+ydoc.on("update", (update, origin) => {
+  if (origin !== "remote") {
+    sendUpdate(update)
+  }
+
+  // Sync editor content for preview
+  editorContent.value = ytext.toString()
+})
+
 onMounted(() => {
+  // Initialize CodeMirror with basic setup (yCollab integration comes in US-037)
   const state = EditorState.create({
     doc: initialContent || "",
     extensions: [
@@ -39,12 +78,45 @@ onMounted(() => {
     state,
     parent: editorContainer.value,
   })
+
+  // Subscribe to DocumentChannel
+  subscription = consumer.subscriptions.create(
+    { channel: "DocumentChannel", project_id: project.id, file_path: path },
+    {
+      connected() {
+        connectionStatus.value = "connected"
+      },
+
+      disconnected() {
+        connectionStatus.value = "disconnected"
+      },
+
+      received(data) {
+        if (data.type === "sync") {
+          applyRemoteState(data.state)
+          connectionStatus.value = "connected"
+        } else if (data.type === "update") {
+          if (String(data.sender) !== String(currentUserId)) {
+            Y.transact(ydoc, () => {
+              applyRemoteUpdate(data.update)
+            }, "remote")
+          }
+        }
+      },
+    },
+  )
 })
 
 onBeforeUnmount(() => {
+  if (subscription) {
+    subscription.unsubscribe()
+    subscription = null
+  }
+  consumer.disconnect()
   if (editorView.value) {
     editorView.value.destroy()
   }
+  ydoc.destroy()
 })
 
 function save() {
@@ -70,7 +142,8 @@ function save() {
       onError: () => {
         toast.add({
           title: "Save failed",
-          description: "The file may have been modified by someone else. Please refresh and try again.",
+          description:
+            "The file may have been modified by someone else. Please refresh and try again.",
           color: "error",
         })
       },
@@ -114,13 +187,17 @@ function save() {
         @click="router.visit(`/projects/${project.slug}/files/${path}`)"
       />
       <div class="ml-auto">
-        <UBadge :color="connected ? 'success' : 'error'" variant="subtle">
-          {{ connected ? "connected" : "disconnected" }}
+        <UBadge :color="connectionStatus === 'connected' ? 'success' : 'error'" variant="subtle">
+          {{ connectionStatus }}
         </UBadge>
       </div>
     </div>
 
-    <div v-show="!showPreview" ref="editorContainer" class="rounded-lg border border-gray-200 dark:border-gray-700 [&_.cm-editor]:min-h-[60vh] [&_.cm-editor]:outline-none" />
+    <div
+      v-show="!showPreview"
+      ref="editorContainer"
+      class="rounded-lg border border-gray-200 dark:border-gray-700 [&_.cm-editor]:min-h-[60vh] [&_.cm-editor]:outline-none"
+    />
 
     <div v-show="showPreview" class="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
       <MarkdownPreview :content="editorContent" />

@@ -99,6 +99,7 @@ class FilesController < ApplicationController
 
   def serialize_project
     {
+      id: @project.id,
       name: @project.name,
       slug: @project.slug,
       uuid: @project.uuid
