@@ -764,8 +764,8 @@
         "Typecheck passes"
       ],
       "priority": 45,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "CleanupExpiredTokensJob deletes tokens where expires_at < Time.current OR revoked_at < 30.days.ago. Uses delete_all for efficient bulk deletion. Already registered in GoodJob cron as cleanup_expired_tokens at '0 3 * * *'. 4 tests: expired deleted, old revoked deleted, active kept, recently revoked kept."
     },
     {
       "id": "US-046",

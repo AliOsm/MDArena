@@ -678,3 +678,15 @@
   - `assert_no_streams` in ActionCable channel tests takes NO arguments — it checks there are no streams at all; use `assert_has_stream` for positive checks only
   - Guard `onMounted` with `if (!currentUser?.id) return` to avoid creating subscriptions when user data is not available (e.g., auth pages)
 ---
+
+## 2026-02-06 - US-045
+- What was implemented: CleanupExpiredTokensJob — deletes expired and long-revoked personal access tokens
+- Files changed:
+  - app/jobs/cleanup_expired_tokens_job.rb (replaced placeholder with implementation: deletes tokens where expires_at < Time.current OR revoked_at < 30.days.ago)
+  - test/jobs/cleanup_expired_tokens_job_test.rb (created; 4 tests: expired deleted, old revoked deleted, active kept, recently revoked kept)
+  - prd.json (marked US-045 as passes: true)
+- **Learnings for future iterations:**
+  - `delete_all` is more efficient than `destroy_all` for cleanup jobs — no callbacks or instantiation needed for simple token deletion
+  - When testing deletion jobs with fixtures, be aware that multiple fixture records may match the deletion criteria — avoid `assert_difference` with hardcoded counts when other fixtures are also affected
+  - ActiveRecord `.or()` method chains nicely for combining deletion conditions: `where("expires_at < ?", Time.current).or(where("revoked_at < ?", 30.days.ago))`
+---
