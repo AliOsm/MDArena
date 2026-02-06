@@ -66,6 +66,7 @@
 - Route helper for member routes: `<action>_<resource>_path` (e.g., `settings_project_path(slug)`) — not `<resource>_<action>_path`
 - Singular `resource :profile` routes to `ProfilesController` by default — add `controller: "profile"` to use `ProfileController`
 - Devise `update_with_password` for password changes, plain `update` for non-password attribute changes; call `bypass_sign_in` after password update
+- ActionCable `periodically :method_name, every: N.seconds` runs periodic checks on active channel subscriptions — useful for polling external state changes (e.g., Git HEAD changes)
 
 ---
 
@@ -739,4 +740,35 @@
   - Devise `update_with_password` requires `current_password` param — use `update` (without password) for name/email-only changes
   - `bypass_sign_in(current_user)` after password change keeps the session valid — without it, user is logged out
   - Inertia error sharing: `redirect_to path, inertia: { errors: user.errors.to_hash(true) }` stores errors for next page render
+---
+
+## 2026-02-06 - US-049
+- What was implemented: Git push notification to web UI users — polling mechanism detects HEAD changes and notifies editor users
+- Files changed:
+  - app/services/git_service.rb (added `head_sha` class method to return current HEAD SHA for a project)
+  - app/channels/document_channel.rb (added `periodically :check_head_changed, every: 10.seconds`; stores @last_known_head on subscribe; check_head_changed compares current HEAD and broadcasts { type: "file_changed" } on change)
+  - app/javascript/pages/Files/Edit.vue (added fileChangedExternally ref; handles "file_changed" message in received callback with warning toast and persistent UAlert banner with Refresh button)
+  - test/services/git_service_test.rb (added 2 tests: head_sha returns SHA, head_sha returns nil for empty repo)
+  - test/channels/document_channel_test.rb (added 2 tests: broadcasts file_changed on HEAD change, no broadcast when unchanged)
+- **Learnings for future iterations:**
+  - ActionCable `periodically :method_name, every: N.seconds` is the built-in way to run periodic tasks on a channel — simpler than external cron jobs for subscriber-specific checks
+  - `GitService.head_sha` uses `repo.references["refs/heads/main"]&.target&.oid` — safe navigation handles nil ref for empty repos
+  - `check_head_changed` must be a public method for `periodically` to call it — it lives outside the `private` section
+  - The polling approach (every 10 seconds) works for detecting external Git pushes without requiring post-receive hooks — acceptable latency for notification use case
+  - `assert_broadcast_on(stream, data) { ... }` and `assert_no_broadcasts(stream) { ... }` are the correct ActionCable test helpers for verifying broadcasts
+---
+
+## 2026-02-06 - US-050
+- What was implemented: Kamal 2 deployment configuration for single-server deployment
+- Files changed:
+  - config/deploy.yml (rewritten from scaffold default to full Kamal 2 config: service mdforge, ghcr.io registry, web/job roles, proxy with SSL, postgres/nginx accessories)
+  - prd.json (marked US-050 as passes: true)
+- **Learnings for future iterations:**
+  - Kamal 2 `servers` section uses `hosts:` array (not plain list) for named server roles; `options.memory` sets Docker memory limit
+  - GoodJob in production uses `GOOD_JOB_EXECUTION_MODE: external` — runs as separate process via `bundle exec good_job start` (not inline in Puma)
+  - Nginx accessory mounts config via `files:` (for config files) and `volumes:` (for data directories) — different from `directories:` which creates managed volumes
+  - Postgres accessory: use `127.0.0.1:5432:5432` for local-only binding; pgdata volume for persistence
+  - Nginx needs read-only access to `/var/repos` (for git-http-backend) and `/etc/ssl` (for SSL certs)
+  - `proxy.app_port: 3000` tells Kamal's proxy which port the Rails app listens on
+  - This is a config-only story with no Ruby/JS code changes — all quality checks pass without modification
 ---
