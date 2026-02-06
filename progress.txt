@@ -443,3 +443,14 @@
   - Breadcrumb pattern: chain UButton (variant="link") elements with `/` separators for file navigation hierarchy
   - `row.sha.slice(0, 8)` provides the standard short SHA display in a UBadge with code tag
 ---
+
+## 2026-02-06 - US-030
+- What was implemented: Historical file view page (Files/HistoryShow.vue) for viewing file content at a specific commit
+- Files changed:
+  - app/javascript/pages/Files/HistoryShow.vue (created; commit SHA in UBadge, MarkdownPreview component, Back to history button, breadcrumb navigation)
+  - prd.json (marked US-030 as passes: true)
+- **Learnings for future iterations:**
+  - HistoryShow page follows the same layout pattern as Files/Show.vue — breadcrumb nav, heading, content in bordered card
+  - The backend (FileHistoryController#show) already existed from US-028 — only the Vue page was needed
+  - Reuse MarkdownPreview component for any page that renders markdown content — consistent rendering across show, edit preview, and history views
+---
