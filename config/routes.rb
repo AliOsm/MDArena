@@ -9,5 +9,9 @@ Rails.application.routes.draw do
 
   root "home#index"
 
+  namespace :settings do
+    resources :tokens, only: [ :index, :create, :destroy ]
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 end
