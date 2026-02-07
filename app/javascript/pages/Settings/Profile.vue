@@ -41,70 +41,83 @@ function updateProfile() {
 
 <template>
   <div class="mx-auto max-w-2xl">
-    <h1 class="mb-6 text-2xl font-bold text-gray-900 dark:text-white">Profile Settings</h1>
+    <h1 class="mb-6 text-2xl font-bold">Profile Settings</h1>
 
-    <form @submit.prevent="updateProfile">
-      <div class="mb-8 space-y-4">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Account Information</h2>
+    <form @submit.prevent="updateProfile" class="space-y-6">
+      <UCard>
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-user" class="size-4 text-(--ui-text-muted)" />
+            <span class="font-semibold text-sm">Account Information</span>
+          </div>
+        </template>
+        <div class="space-y-4">
+          <UFormField label="Name" :error="errors.name?.[0]">
+            <UInput
+              v-model="name"
+              placeholder="Your name"
+              icon="i-lucide-user"
+              class="w-full"
+              required
+            />
+          </UFormField>
 
-        <UFormField label="Name" :error="errors.name?.[0]">
-          <UInput
-            v-model="name"
-            placeholder="Your name"
-            icon="i-lucide-user"
-            class="w-full"
-            required
-          />
-        </UFormField>
+          <UFormField label="Email" :error="errors.email?.[0]">
+            <UInput
+              v-model="email"
+              type="email"
+              placeholder="your@email.com"
+              icon="i-lucide-mail"
+              class="w-full"
+              required
+            />
+          </UFormField>
+        </div>
+      </UCard>
 
-        <UFormField label="Email" :error="errors.email?.[0]">
-          <UInput
-            v-model="email"
-            type="email"
-            placeholder="your@email.com"
-            icon="i-lucide-mail"
-            class="w-full"
-            required
-          />
-        </UFormField>
-      </div>
+      <UCard>
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-lock" class="size-4 text-(--ui-text-muted)" />
+            <span class="font-semibold text-sm">Change Password</span>
+          </div>
+        </template>
+        <div class="space-y-4">
+          <p class="text-sm text-(--ui-text-muted)">
+            Leave blank if you don't want to change your password.
+          </p>
 
-      <div class="mb-8 space-y-4">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Change Password</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          Leave blank if you don't want to change your password.
-        </p>
+          <UFormField label="Current password" :error="errors.current_password?.[0]">
+            <UInput
+              v-model="currentPassword"
+              type="password"
+              placeholder="Enter current password"
+              icon="i-lucide-lock"
+              class="w-full"
+            />
+          </UFormField>
 
-        <UFormField label="Current password" :error="errors.current_password?.[0]">
-          <UInput
-            v-model="currentPassword"
-            type="password"
-            placeholder="Enter current password"
-            icon="i-lucide-lock"
-            class="w-full"
-          />
-        </UFormField>
+          <UFormField label="New password" :error="errors.password?.[0]">
+            <UInput
+              v-model="password"
+              type="password"
+              placeholder="Enter new password"
+              icon="i-lucide-lock"
+              class="w-full"
+            />
+          </UFormField>
 
-        <UFormField label="New password" :error="errors.password?.[0]">
-          <UInput
-            v-model="password"
-            type="password"
-            placeholder="Enter new password"
-            icon="i-lucide-lock"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField label="Confirm new password" :error="errors.password_confirmation?.[0]">
-          <UInput
-            v-model="passwordConfirmation"
-            type="password"
-            placeholder="Confirm new password"
-            icon="i-lucide-lock"
-            class="w-full"
-          />
-        </UFormField>
-      </div>
+          <UFormField label="Confirm new password" :error="errors.password_confirmation?.[0]">
+            <UInput
+              v-model="passwordConfirmation"
+              type="password"
+              placeholder="Confirm new password"
+              icon="i-lucide-lock"
+              class="w-full"
+            />
+          </UFormField>
+        </div>
+      </UCard>
 
       <div class="flex justify-end">
         <UButton type="submit" label="Save Changes" icon="i-lucide-save" :loading="saving" />

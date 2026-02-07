@@ -28,24 +28,23 @@ const columns = [
 
 <template>
   <div>
-    <div class="mb-6">
-      <div class="mb-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-        <UButton
-          variant="link"
-          :label="project.name"
-          @click="router.visit(`/projects/${project.slug}`)"
-          class="p-0"
-        />
-        <span>/</span>
-        <UButton
-          variant="link"
-          :label="path"
-          @click="router.visit(`/projects/${project.slug}/files/${path}`)"
-          class="p-0"
-        />
-        <span>/</span>
-      </div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">History</h1>
+    <!-- Breadcrumb -->
+    <div class="mb-4 flex items-center gap-1 text-sm text-(--ui-text-muted)">
+      <UButton
+        variant="link"
+        :label="project.name"
+        @click="router.visit(`/projects/${project.slug}`)"
+        class="p-0"
+      />
+      <UIcon name="i-lucide-chevron-right" class="size-3.5" />
+      <UButton
+        variant="link"
+        :label="path"
+        @click="router.visit(`/projects/${project.slug}/files/${path}`)"
+        class="p-0"
+      />
+      <UIcon name="i-lucide-chevron-right" class="size-3.5" />
+      <span class="font-medium text-(--ui-text)">History</span>
     </div>
 
     <div class="mb-6">
@@ -58,41 +57,41 @@ const columns = [
       />
     </div>
 
-    <UTable v-if="history.length" :columns="columns" :data="history">
-      <template #sha-cell="{ row }">
-        <UBadge variant="subtle" color="neutral">
-          <code class="font-mono text-xs">{{ row.original.sha.slice(0, 8) }}</code>
-        </UBadge>
-      </template>
+    <UCard>
+      <UTable v-if="history.length" :columns="columns" :data="history">
+        <template #sha-cell="{ row }">
+          <UBadge variant="subtle" color="neutral">
+            <code class="font-mono text-xs">{{ row.original.sha.slice(0, 8) }}</code>
+          </UBadge>
+        </template>
 
-      <template #message-cell="{ row }">
-        {{ row.original.message }}
-      </template>
+        <template #message-cell="{ row }">
+          {{ row.original.message }}
+        </template>
 
-      <template #author-cell="{ row }">
-        {{ row.original.author.name }}
-      </template>
+        <template #author-cell="{ row }">
+          {{ row.original.author.name }}
+        </template>
 
-      <template #time-cell="{ row }">
-        {{ formatDate(row.original.time) }}
-      </template>
+        <template #time-cell="{ row }">
+          {{ formatDate(row.original.time) }}
+        </template>
 
-      <template #actions-cell="{ row }">
-        <UButton
-          label="View"
-          variant="soft"
-          size="xs"
-          @click="router.visit(`/projects/${project.slug}/files/${path}/history/${row.original.sha}`)"
-        />
-      </template>
-    </UTable>
+        <template #actions-cell="{ row }">
+          <UButton
+            label="View"
+            variant="soft"
+            size="xs"
+            @click="router.visit(`/projects/${project.slug}/files/${path}/history/${row.original.sha}`)"
+          />
+        </template>
+      </UTable>
 
-    <UAlert
-      v-else
-      icon="i-lucide-history"
-      title="No history"
-      description="This file has no commit history yet."
-      color="neutral"
-    />
+      <div v-else class="flex flex-col items-center justify-center py-12">
+        <UIcon name="i-lucide-history" class="size-10 text-(--ui-text-dimmed)" />
+        <p class="mt-3 font-medium">No history</p>
+        <p class="mt-1 text-sm text-(--ui-text-muted)">This file has no commit history yet.</p>
+      </div>
+    </UCard>
   </div>
 </template>

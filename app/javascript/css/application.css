@@ -3,3 +3,33 @@
 @plugin "@tailwindcss/typography";
 
 @source "../**/*.{vue,js,ts}";
+
+/* CodeMirror theme integration with Nuxt UI */
+.cm-editor {
+  font-size: 0.875rem;
+}
+
+.cm-editor .cm-gutters {
+  border-right: 1px solid var(--ui-border);
+  background-color: var(--ui-bg-elevated);
+}
+
+.cm-editor .cm-content {
+  padding: 0.5rem 0;
+}
+
+.cm-editor .cm-line {
+  padding: 0 1rem;
+}
+
+.cm-editor .cm-activeLineGutter {
+  background-color: var(--ui-bg-accented);
+}
+
+.cm-editor .cm-activeLine {
+  background-color: var(--ui-bg-accented);
+}
+
+.cm-editor.cm-focused {
+  outline: none;
+}

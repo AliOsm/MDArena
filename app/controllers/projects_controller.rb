@@ -60,6 +60,11 @@ class ProjectsController < ApplicationController
     }
   end
 
+  def clone_url_for(project)
+    base = ENV.fetch("GIT_HTTP_BASE_URL") { "#{request.protocol}#{request.host_with_port}" }
+    "#{base}/git/#{project.slug}.git"
+  end
+
   def serialize_project(project)
     membership = project.memberships.find_by(user: current_user)
     {
@@ -70,7 +75,7 @@ class ProjectsController < ApplicationController
       role: membership&.role,
       ownerName: project.owner.name,
       updatedAt: project.updated_at,
-      cloneUrl: "/git/#{project.slug}.git"
+      cloneUrl: clone_url_for(project)
     }
   end
 end

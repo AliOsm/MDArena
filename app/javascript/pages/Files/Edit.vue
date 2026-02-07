@@ -1,5 +1,5 @@
 <script setup>
-import { ref, shallowRef, onMounted, onBeforeUnmount } from "vue"
+import { ref, shallowRef, computed, onMounted, onBeforeUnmount } from "vue"
 import { usePage, router } from "@inertiajs/vue3"
 import { EditorState } from "@codemirror/state"
 import { EditorView, basicSetup } from "codemirror"
@@ -8,6 +8,9 @@ import { yCollab } from "y-codemirror.next"
 import * as Y from "yjs"
 import { createConsumer } from "@rails/actioncable"
 import MarkdownPreview from "@/components/MarkdownPreview.vue"
+import EditorLayout from "@/layouts/EditorLayout.vue"
+
+defineOptions({ layout: EditorLayout })
 
 const page = usePage()
 const project = page.props.project
@@ -18,11 +21,19 @@ const toast = useToast()
 
 const editorContainer = ref(null)
 const editorView = shallowRef(null)
-const showPreview = ref(false)
+const previewVisible = ref(true)
 const saving = ref(false)
 const connectionStatus = ref("connecting")
 const editorContent = ref(initialContent || "")
 const fileChangedExternally = ref(false)
+
+const wordCount = computed(() => {
+  const text = editorContent.value.trim()
+  if (!text) return 0
+  return text.split(/\s+/).length
+})
+
+const charCount = computed(() => editorContent.value.length)
 
 // Y.js setup
 const ydoc = new Y.Doc()
@@ -180,68 +191,117 @@ function save() {
 </script>
 
 <template>
-  <div>
-    <div class="mb-6">
-      <div class="mb-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-        <UButton
-          variant="link"
-          :label="project.name"
-          @click="router.visit(`/projects/${project.slug}`)"
-          class="p-0"
-        />
-        <span>/</span>
+  <div class="flex flex-col flex-1 min-h-0">
+    <!-- Toolbar -->
+    <div
+      class="relative z-10 flex h-12 shrink-0 items-center gap-2 border-b border-(--ui-border) bg-(--ui-bg-elevated) px-4"
+    >
+      <UButton
+        icon="i-lucide-arrow-left"
+        size="xs"
+        variant="ghost"
+        color="neutral"
+        @click="router.visit(`/projects/${project.slug}/files/${path}`)"
+      />
+
+      <USeparator orientation="vertical" class="h-5" />
+
+      <div class="flex items-center gap-1 text-sm text-(--ui-text-muted) min-w-0">
+        <span class="truncate">{{ project.name }}</span>
+        <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0" />
+        <span class="truncate font-medium text-(--ui-text)">{{ path }}</span>
       </div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ path }}</h1>
+
+      <div class="ml-auto flex items-center gap-2">
+        <UButton
+          icon="i-lucide-save"
+          label="Save"
+          size="xs"
+          :loading="saving"
+          @click="save"
+        />
+        <UButton
+          :icon="previewVisible ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          @click="previewVisible = !previewVisible"
+        />
+
+        <USeparator orientation="vertical" class="h-5" />
+
+        <div class="flex items-center gap-1.5">
+          <UIcon
+            name="i-lucide-wifi"
+            class="size-4"
+            :class="connectionStatus === 'connected' ? 'text-(--ui-success)' : 'text-(--ui-error)'"
+          />
+          <UBadge
+            :color="connectionStatus === 'connected' ? 'success' : 'error'"
+            variant="subtle"
+            size="xs"
+            :label="connectionStatus"
+          />
+        </div>
+      </div>
     </div>
 
+    <!-- External change alert -->
     <UAlert
       v-if="fileChangedExternally"
       color="warning"
       icon="i-lucide-alert-triangle"
       title="This file was changed outside the editor. Please refresh to get the latest version."
-      class="mb-4"
     >
       <template #actions>
         <UButton
           label="Refresh"
           color="warning"
           variant="soft"
+          size="xs"
           @click="router.visit(`/projects/${project.slug}/files/${path}/edit`)"
         />
       </template>
     </UAlert>
 
-    <div class="mb-4 flex flex-wrap items-center gap-2">
-      <UButton icon="i-lucide-save" label="Save" :loading="saving" @click="save" />
-      <UButton
-        :icon="showPreview ? 'i-lucide-code' : 'i-lucide-eye'"
-        :label="showPreview ? 'Editor' : 'Preview'"
-        variant="soft"
-        color="neutral"
-        @click="showPreview = !showPreview"
-      />
-      <UButton
-        icon="i-lucide-arrow-left"
-        label="Back to file"
-        variant="ghost"
-        color="neutral"
-        @click="router.visit(`/projects/${project.slug}/files/${path}`)"
-      />
-      <div class="ml-auto">
-        <UBadge :color="connectionStatus === 'connected' ? 'success' : 'error'" variant="subtle">
-          {{ connectionStatus }}
-        </UBadge>
-      </div>
-    </div>
+    <!-- Split pane editor/preview -->
+    <UDashboardGroup storage-key="editor-split" class="flex-1 min-h-0">
+      <UDashboardPanel id="editor-panel">
+        <template #header>
+          <div class="flex items-center justify-between w-full px-4 text-sm">
+            <span class="font-medium text-(--ui-text-muted)">Editor</span>
+            <span class="text-xs text-(--ui-text-dimmed)">
+              {{ wordCount }} words &middot; {{ charCount }} chars
+            </span>
+          </div>
+        </template>
+        <template #body>
+          <div
+            ref="editorContainer"
+            class="h-full [&_.cm-editor]:h-full [&_.cm-editor]:outline-none"
+          />
+        </template>
+      </UDashboardPanel>
 
-    <div
-      v-show="!showPreview"
-      ref="editorContainer"
-      class="rounded-lg border border-gray-200 dark:border-gray-700 [&_.cm-editor]:min-h-[60vh] [&_.cm-editor]:outline-none"
-    />
-
-    <div v-show="showPreview" class="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
-      <MarkdownPreview :content="editorContent" />
-    </div>
+      <UDashboardPanel
+        v-if="previewVisible"
+        id="preview-panel"
+        resizable
+        :default-size="50"
+        :min-size="25"
+        :max-size="70"
+      >
+        <template #header>
+          <div class="px-4 text-sm">
+            <span class="font-medium text-(--ui-text-muted)">Preview</span>
+          </div>
+        </template>
+        <template #body>
+          <div class="p-6 overflow-auto h-full">
+            <MarkdownPreview :content="editorContent" />
+          </div>
+        </template>
+      </UDashboardPanel>
+    </UDashboardGroup>
   </div>
 </template>

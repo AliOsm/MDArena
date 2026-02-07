@@ -11,39 +11,33 @@ const content = page.props.content
 
 <template>
   <div>
-    <div class="mb-6">
-      <div class="mb-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-        <UButton
-          variant="link"
-          :label="project.name"
-          @click="router.visit(`/projects/${project.slug}`)"
-          class="p-0"
-        />
-        <span>/</span>
-        <UButton
-          variant="link"
-          :label="path"
-          @click="router.visit(`/projects/${project.slug}/files/${path}`)"
-          class="p-0"
-        />
-        <span>/</span>
-        <UButton
-          variant="link"
-          label="History"
-          @click="router.visit(`/projects/${project.slug}/files/${path}/history`)"
-          class="p-0"
-        />
-        <span>/</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Revision</h1>
-        <UBadge variant="subtle" color="neutral">
-          <code class="font-mono text-xs">{{ sha.slice(0, 8) }}</code>
-        </UBadge>
-      </div>
+    <!-- Breadcrumb -->
+    <div class="mb-4 flex items-center gap-1 text-sm text-(--ui-text-muted)">
+      <UButton
+        variant="link"
+        :label="project.name"
+        @click="router.visit(`/projects/${project.slug}`)"
+        class="p-0"
+      />
+      <UIcon name="i-lucide-chevron-right" class="size-3.5" />
+      <UButton
+        variant="link"
+        :label="path"
+        @click="router.visit(`/projects/${project.slug}/files/${path}`)"
+        class="p-0"
+      />
+      <UIcon name="i-lucide-chevron-right" class="size-3.5" />
+      <UButton
+        variant="link"
+        label="History"
+        @click="router.visit(`/projects/${project.slug}/files/${path}/history`)"
+        class="p-0"
+      />
+      <UIcon name="i-lucide-chevron-right" class="size-3.5" />
+      <span class="font-medium text-(--ui-text)">Revision</span>
     </div>
 
-    <div class="mb-6">
+    <div class="mb-6 flex items-center gap-3">
       <UButton
         icon="i-lucide-arrow-left"
         label="Back to history"
@@ -51,10 +45,15 @@ const content = page.props.content
         color="neutral"
         @click="router.visit(`/projects/${project.slug}/files/${path}/history`)"
       />
+      <UBadge variant="subtle" color="neutral">
+        <code class="font-mono text-xs">{{ sha.slice(0, 8) }}</code>
+      </UBadge>
     </div>
 
-    <div class="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
-      <MarkdownPreview :content="content" />
-    </div>
+    <UCard>
+      <div class="p-2">
+        <MarkdownPreview :content="content" />
+      </div>
+    </UCard>
   </div>
 </template>

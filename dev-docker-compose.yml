@@ -5,7 +5,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -29,4 +29,4 @@ services:
       - "host.docker.internal:host-gateway"
 
 volumes:
-  pgdata:
+  postgres-data:

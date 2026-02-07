@@ -51,61 +51,74 @@ function removeMember(member) {
 
 <template>
   <div>
-    <div class="mb-2">
+    <!-- Breadcrumb -->
+    <div class="mb-4 flex items-center gap-1 text-sm text-(--ui-text-muted)">
       <UButton
         variant="link"
-        icon="i-lucide-arrow-left"
         :label="project.name"
         @click="router.visit(`/projects/${project.slug}`)"
+        class="p-0"
       />
+      <UIcon name="i-lucide-chevron-right" class="size-3.5" />
+      <span class="font-medium text-(--ui-text)">Settings</span>
     </div>
 
-    <h1 class="mb-6 text-2xl font-bold text-gray-900 dark:text-white">Project Settings</h1>
+    <h1 class="mb-6 text-2xl font-bold">Project Settings</h1>
 
-    <div class="mb-8">
-      <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Members</h2>
-
-      <UTable v-if="members.length" :columns="columns" :data="members">
-        <template #role-cell="{ row }">
-          <UBadge
-            :label="row.original.role"
-            :color="row.original.role === 'owner' ? 'primary' : 'neutral'"
-            variant="subtle"
-          />
+    <div class="space-y-6">
+      <UCard>
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-users" class="size-4 text-(--ui-text-muted)" />
+            <span class="font-semibold text-sm">Members</span>
+          </div>
         </template>
 
-        <template #actions-cell="{ row }">
-          <UButton
-            v-if="row.original.userEmail !== page.props.currentUser?.email"
-            label="Remove"
-            color="error"
-            variant="ghost"
-            size="xs"
-            @click="removeMember(row.original)"
-          />
-        </template>
-      </UTable>
-    </div>
+        <UTable v-if="members.length" :columns="columns" :data="members">
+          <template #role-cell="{ row }">
+            <UBadge
+              :label="row.original.role"
+              :color="row.original.role === 'owner' ? 'primary' : 'neutral'"
+              variant="subtle"
+            />
+          </template>
 
-    <div
-      class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900"
-    >
-      <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Add Member</h2>
-      <form class="flex items-end gap-3" @submit.prevent="addMember">
-        <UFormField label="Email" class="flex-1">
-          <UInput
-            v-model="email"
-            type="email"
-            placeholder="user@example.com"
-            icon="i-lucide-mail"
-            required
-          />
-        </UFormField>
-        <UFormField label="Role">
-          <USelect v-model="role" :items="roleOptions" />
-        </UFormField>
-        <UButton type="submit" label="Add" icon="i-lucide-user-plus" :loading="adding" />
-      </form>
+          <template #actions-cell="{ row }">
+            <UButton
+              v-if="row.original.userEmail !== page.props.currentUser?.email"
+              label="Remove"
+              color="error"
+              variant="ghost"
+              size="xs"
+              @click="removeMember(row.original)"
+            />
+          </template>
+        </UTable>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-user-plus" class="size-4 text-(--ui-text-muted)" />
+            <span class="font-semibold text-sm">Add Member</span>
+          </div>
+        </template>
+        <form class="flex items-end gap-3" @submit.prevent="addMember">
+          <UFormField label="Email" class="flex-1">
+            <UInput
+              v-model="email"
+              type="email"
+              placeholder="user@example.com"
+              icon="i-lucide-mail"
+              required
+            />
+          </UFormField>
+          <UFormField label="Role">
+            <USelect v-model="role" :items="roleOptions" />
+          </UFormField>
+          <UButton type="submit" label="Add" icon="i-lucide-user-plus" :loading="adding" />
+        </form>
+      </UCard>
     </div>
   </div>
 </template>

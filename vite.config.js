@@ -12,8 +12,8 @@ export default defineConfig({
       inertia: true,
       ui: {
         colors: {
-          primary: 'blue',
-          neutral: 'slate',
+          primary: 'red',
+          neutral: 'zinc',
         },
       },
     }),

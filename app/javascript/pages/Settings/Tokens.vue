@@ -63,7 +63,7 @@ function revokeToken(token) {
 <template>
   <div>
     <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Personal Access Tokens</h1>
+      <h1 class="text-2xl font-bold">Personal Access Tokens</h1>
       <UButton icon="i-lucide-plus" label="New Token" @click="showCreateModal = true" />
     </div>
 
@@ -76,70 +76,71 @@ function revokeToken(token) {
       class="mb-6"
     />
 
-    <UTable v-if="tokens.length" :columns="columns" :data="tokens">
-      <template #name-cell="{ row }">
-        <span :class="{ 'text-gray-400 dark:text-gray-600': tokenStatus(row.original) !== 'active' }">
-          {{ row.original.name }}
-        </span>
-      </template>
+    <UCard>
+      <UTable v-if="tokens.length" :columns="columns" :data="tokens">
+        <template #name-cell="{ row }">
+          <span :class="{ 'text-(--ui-text-dimmed)': tokenStatus(row.original) !== 'active' }">
+            {{ row.original.name }}
+          </span>
+        </template>
 
-      <template #tokenPrefix-cell="{ row }">
-        <code
-          class="rounded bg-gray-100 px-2 py-0.5 font-mono text-sm dark:bg-gray-800"
-          :class="{ 'text-gray-400 dark:text-gray-600': tokenStatus(row.original) !== 'active' }"
-        >
-          {{ row.original.tokenPrefix }}........
-        </code>
-      </template>
+        <template #tokenPrefix-cell="{ row }">
+          <code
+            class="rounded bg-(--ui-bg-elevated) px-2 py-0.5 font-mono text-sm"
+            :class="{ 'text-(--ui-text-dimmed)': tokenStatus(row.original) !== 'active' }"
+          >
+            {{ row.original.tokenPrefix }}........
+          </code>
+        </template>
 
-      <template #lastUsedAt-cell="{ row }">
-        <span :class="{ 'text-gray-400 dark:text-gray-600': tokenStatus(row.original) !== 'active' }">
-          {{ formatDate(row.original.lastUsedAt) }}
-        </span>
-      </template>
+        <template #lastUsedAt-cell="{ row }">
+          <span :class="{ 'text-(--ui-text-dimmed)': tokenStatus(row.original) !== 'active' }">
+            {{ formatDate(row.original.lastUsedAt) }}
+          </span>
+        </template>
 
-      <template #status-cell="{ row }">
-        <UBadge
-          v-if="tokenStatus(row.original) === 'revoked'"
-          label="Revoked"
-          color="error"
-          variant="subtle"
-        />
-        <UBadge
-          v-else-if="tokenStatus(row.original) === 'expired'"
-          label="Expired"
-          color="warning"
-          variant="subtle"
-        />
-        <UBadge v-else label="Active" color="success" variant="subtle" />
-      </template>
+        <template #status-cell="{ row }">
+          <UBadge
+            v-if="tokenStatus(row.original) === 'revoked'"
+            label="Revoked"
+            color="error"
+            variant="subtle"
+          />
+          <UBadge
+            v-else-if="tokenStatus(row.original) === 'expired'"
+            label="Expired"
+            color="warning"
+            variant="subtle"
+          />
+          <UBadge v-else label="Active" color="success" variant="subtle" />
+        </template>
 
-      <template #actions-cell="{ row }">
-        <UButton
-          v-if="tokenStatus(row.original) === 'active'"
-          label="Revoke"
-          color="error"
-          variant="ghost"
-          size="xs"
-          @click="revokeToken(row.original)"
-        />
-      </template>
-    </UTable>
+        <template #actions-cell="{ row }">
+          <UButton
+            v-if="tokenStatus(row.original) === 'active'"
+            label="Revoke"
+            color="error"
+            variant="ghost"
+            size="xs"
+            @click="revokeToken(row.original)"
+          />
+        </template>
+      </UTable>
 
-    <UAlert
-      v-else
-      icon="i-lucide-key"
-      title="No tokens yet"
-      description="Create a personal access token to authenticate Git operations."
-      color="neutral"
-    />
+      <div
+        v-else
+        class="flex flex-col items-center justify-center py-12"
+      >
+        <UIcon name="i-lucide-key" class="size-10 text-(--ui-text-dimmed)" />
+        <p class="mt-3 font-medium">No tokens yet</p>
+        <p class="mt-1 text-sm text-(--ui-text-muted)">Create a personal access token to authenticate Git operations.</p>
+      </div>
+    </UCard>
 
     <UModal v-model:open="showCreateModal">
       <template #content>
         <div class="p-6">
-          <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-            Create New Token
-          </h2>
+          <h2 class="mb-4 text-lg font-semibold">Create New Token</h2>
           <form @submit.prevent="createToken">
             <UFormField label="Token name" class="mb-4">
               <UInput

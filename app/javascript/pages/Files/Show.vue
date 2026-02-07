@@ -30,20 +30,20 @@ function deleteFile() {
 
 <template>
   <div>
-    <div class="mb-6">
-      <div class="mb-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-        <UButton
-          variant="link"
-          :label="project.name"
-          @click="router.visit(`/projects/${project.slug}`)"
-          class="p-0"
-        />
-        <span>/</span>
-      </div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ path }}</h1>
+    <!-- Breadcrumb -->
+    <div class="mb-4 flex items-center gap-1 text-sm text-(--ui-text-muted)">
+      <UButton
+        variant="link"
+        :label="project.name"
+        @click="router.visit(`/projects/${project.slug}`)"
+        class="p-0"
+      />
+      <UIcon name="i-lucide-chevron-right" class="size-3.5" />
+      <span class="font-medium text-(--ui-text)">{{ path }}</span>
     </div>
 
-    <div class="mb-6 flex flex-wrap gap-2">
+    <!-- Actions -->
+    <div class="mb-6 flex flex-wrap items-center gap-2">
       <UButton
         icon="i-lucide-pencil"
         label="Edit"
@@ -58,22 +58,26 @@ function deleteFile() {
       />
       <UButton
         icon="i-lucide-download"
-        label="Download MD"
+        label="Download"
         variant="soft"
         color="neutral"
         @click="downloadMd"
       />
-<UButton
+      <USeparator orientation="vertical" class="h-5" />
+      <UButton
         icon="i-lucide-trash-2"
         label="Delete"
-        variant="soft"
+        variant="ghost"
         color="error"
         @click="deleteFile"
       />
     </div>
 
-    <div class="rounded-lg border border-gray-200 p-6 dark:border-gray-700">
-      <MarkdownPreview :content="content" />
-    </div>
+    <!-- Content -->
+    <UCard>
+      <div class="p-2">
+        <MarkdownPreview :content="content" />
+      </div>
+    </UCard>
   </div>
 </template>

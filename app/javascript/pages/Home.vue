@@ -1,16 +1,17 @@
 <script setup>
-import { usePage } from "@inertiajs/vue3"
+import { onMounted } from "vue"
+import { router } from "@inertiajs/vue3"
 
-const page = usePage()
+onMounted(() => {
+  router.visit("/projects")
+})
 </script>
 
 <template>
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-      Welcome, {{ page.props.currentUser?.name }}
-    </h1>
-    <p class="mt-2 text-gray-600 dark:text-gray-400">
-      Your projects will appear here.
-    </p>
+  <div class="flex items-center justify-center py-16">
+    <div class="flex flex-col items-center gap-3">
+      <div class="size-8 animate-spin rounded-full border-2 border-(--ui-primary) border-t-transparent" />
+      <span class="text-sm text-(--ui-text-muted)">Redirecting...</span>
+    </div>
   </div>
 </template>
