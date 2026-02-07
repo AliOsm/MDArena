@@ -71,7 +71,7 @@ function submit() {
               <UIcon name="i-lucide-swords" class="size-6 text-(--ui-primary)" />
             </div>
             <div class="text-center">
-              <h1 class="text-2xl font-bold">Welcome back</h1>
+              <h1 class="text-xl sm:text-2xl font-bold">Welcome back</h1>
               <p class="mt-1 text-sm text-(--ui-text-muted)">Sign in to your account</p>
             </div>
           </div>

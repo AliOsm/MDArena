@@ -40,8 +40,8 @@ function updateProfile() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-2xl">
-    <h1 class="mb-6 text-2xl font-bold">Profile Settings</h1>
+  <div class="mx-auto max-w-2xl px-4 sm:px-0">
+    <h1 class="mb-6 text-xl sm:text-2xl font-bold">Profile Settings</h1>
 
     <form @submit.prevent="updateProfile" class="space-y-6">
       <UCard>
@@ -120,7 +120,7 @@ function updateProfile() {
       </UCard>
 
       <div class="flex justify-end">
-        <UButton type="submit" label="Save Changes" icon="i-lucide-save" :loading="saving" />
+        <UButton type="submit" label="Save Changes" icon="i-lucide-save" :loading="saving" class="w-full sm:w-auto" />
       </div>
     </form>
   </div>

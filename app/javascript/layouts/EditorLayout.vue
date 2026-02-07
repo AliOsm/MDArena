@@ -3,7 +3,7 @@
 
 <template>
   <UApp>
-    <div class="h-screen flex flex-col">
+    <div class="h-dvh flex flex-col">
       <slot />
     </div>
   </UApp>

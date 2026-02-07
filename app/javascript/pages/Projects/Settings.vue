@@ -74,6 +74,7 @@ function removeMember(member) {
           </div>
         </template>
 
+        <div class="overflow-x-auto">
         <UTable v-if="members.length" :columns="columns" :data="members">
           <template #role-cell="{ row }">
             <UBadge
@@ -94,6 +95,7 @@ function removeMember(member) {
             />
           </template>
         </UTable>
+        </div>
       </UCard>
 
       <UCard>
@@ -103,7 +105,7 @@ function removeMember(member) {
             <span class="font-semibold text-sm">Add Member</span>
           </div>
         </template>
-        <form class="flex items-end gap-3" @submit.prevent="addMember">
+        <form class="flex flex-col sm:flex-row sm:items-end gap-3" @submit.prevent="addMember">
           <UFormField label="Email" class="flex-1">
             <UInput
               v-model="email"

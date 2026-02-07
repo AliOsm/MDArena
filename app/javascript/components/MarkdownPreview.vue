@@ -20,7 +20,7 @@ const rendered = computed(() => md.render(props.content || ""))
 
 <template>
   <div
-    class="prose max-w-none dark:prose-invert prose-headings:font-semibold prose-a:text-(--ui-primary) prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-(--ui-bg-elevated) prose-code:px-1.5 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none"
+    class="prose-sm sm:prose max-w-none dark:prose-invert prose-headings:font-semibold prose-a:text-(--ui-primary) prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-(--ui-bg-elevated) prose-code:px-1.5 prose-code:py-0.5 prose-code:before:content-none prose-code:after:content-none [&_pre]:overflow-x-auto [&_table]:overflow-x-auto"
     v-html="rendered"
   />
 </template>

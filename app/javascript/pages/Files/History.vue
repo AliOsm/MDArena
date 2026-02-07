@@ -58,7 +58,8 @@ const columns = [
     </div>
 
     <UCard>
-      <UTable v-if="history.length" :columns="columns" :data="history">
+      <div v-if="history.length" class="overflow-x-auto">
+      <UTable :columns="columns" :data="history">
         <template #sha-cell="{ row }">
           <UBadge variant="subtle" color="neutral">
             <code class="font-mono text-xs">{{ row.original.sha.slice(0, 8) }}</code>
@@ -86,6 +87,7 @@ const columns = [
           />
         </template>
       </UTable>
+      </div>
 
       <div v-else class="flex flex-col items-center justify-center py-12">
         <UIcon name="i-lucide-history" class="size-10 text-(--ui-text-dimmed)" />

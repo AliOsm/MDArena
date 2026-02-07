@@ -43,7 +43,7 @@ function logout() {
 
 <template>
   <UApp>
-    <UDashboardGroup storage-key="app-sidebar" class="h-screen">
+    <UDashboardGroup storage-key="app-sidebar" class="h-dvh">
       <UDashboardSidebar
         collapsible
         resizable
@@ -82,8 +82,18 @@ function logout() {
       </UDashboardSidebar>
 
       <UDashboardPanel>
+        <template #header>
+          <UDashboardNavbar toggle class="lg:hidden">
+            <template #left>
+              <div class="flex items-center gap-2">
+                <UIcon name="i-lucide-swords" class="size-5 text-(--ui-primary)" />
+                <span class="font-semibold text-sm">MDArena</span>
+              </div>
+            </template>
+          </UDashboardNavbar>
+        </template>
         <template #body>
-          <div class="p-6">
+          <div class="p-4 sm:p-6">
             <slot />
           </div>
         </template>

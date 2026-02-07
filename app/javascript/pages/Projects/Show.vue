@@ -56,7 +56,7 @@ function copyCloneUrl() {
 <template>
   <div>
     <!-- Header -->
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
       <div class="flex items-center gap-3">
         <UAvatar :src="ownerAvatarUrl" :label="project.ownerName?.[0]" size="lg" />
         <div>
@@ -69,16 +69,17 @@ function copyCloneUrl() {
           variant="subtle"
         />
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 w-full sm:w-auto sm:ml-auto">
         <UButton
           v-if="project.role === 'owner'"
           icon="i-lucide-settings"
           label="Settings"
           color="neutral"
           variant="soft"
+          class="flex-1 sm:flex-initial"
           @click="router.visit(`/projects/${project.slug}/settings`)"
         />
-        <UButton icon="i-lucide-plus" label="New File" @click="showCreateModal = true" />
+        <UButton icon="i-lucide-plus" label="New File" class="flex-1 sm:flex-initial" @click="showCreateModal = true" />
       </div>
     </div>
 

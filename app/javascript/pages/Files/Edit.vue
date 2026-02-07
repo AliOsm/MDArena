@@ -21,7 +21,7 @@ const toast = useToast()
 
 const editorContainer = ref(null)
 const editorView = shallowRef(null)
-const previewVisible = ref(true)
+const previewVisible = ref(window.innerWidth >= 640)
 const saving = ref(false)
 const connectionStatus = ref("connecting")
 const editorContent = ref(initialContent || "")
@@ -332,8 +332,8 @@ function save() {
     <USeparator orientation="vertical" class="h-5" />
 
     <div class="flex items-center gap-1 text-sm text-(--ui-text-muted) min-w-0">
-      <span class="truncate">{{ project.name }}</span>
-      <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0" />
+      <span class="hidden sm:inline truncate">{{ project.name }}</span>
+      <UIcon name="i-lucide-chevron-right" class="hidden sm:block size-3.5 shrink-0" />
       <span class="truncate font-medium text-(--ui-text)">{{ path }}</span>
     </div>
 
@@ -346,18 +346,21 @@ function save() {
 
       <UButton
         icon="i-lucide-save"
-        label="Save"
         size="xs"
         :loading="saving"
         @click="save"
-      />
+      >
+        <span class="hidden sm:inline">Save</span>
+      </UButton>
       <UButton
-        :icon="previewVisible ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
+        :icon="previewVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
         size="xs"
         variant="ghost"
         color="neutral"
         @click="previewVisible = !previewVisible"
-      />
+      >
+        <span class="hidden sm:inline">Preview</span>
+      </UButton>
 
       <USeparator orientation="vertical" class="h-5" />
 
