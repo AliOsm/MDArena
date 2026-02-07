@@ -6,6 +6,7 @@ import { EditorView, basicSetup } from "codemirror"
 import { markdown } from "@codemirror/lang-markdown"
 import { yCollab } from "y-codemirror.next"
 import * as Y from "yjs"
+import { Awareness, encodeAwarenessUpdate, applyAwarenessUpdate } from "y-protocols/awareness"
 import { createConsumer } from "@rails/actioncable"
 import MarkdownPreview from "@/components/MarkdownPreview.vue"
 import EditorLayout from "@/layouts/EditorLayout.vue"
@@ -112,6 +113,50 @@ const ydoc = new Y.Doc()
 const ytext = ydoc.getText("content")
 const undoManager = new Y.UndoManager(ytext)
 
+// Awareness for collaborative cursors
+const awareness = new Awareness(ydoc)
+const CURSOR_COLORS = [
+  { color: "#ef4444", colorLight: "#ef444433" },
+  { color: "#f97316", colorLight: "#f9731633" },
+  { color: "#eab308", colorLight: "#eab30833" },
+  { color: "#22c55e", colorLight: "#22c55e33" },
+  { color: "#06b6d4", colorLight: "#06b6d433" },
+  { color: "#3b82f6", colorLight: "#3b82f633" },
+  { color: "#8b5cf6", colorLight: "#8b5cf633" },
+  { color: "#ec4899", colorLight: "#ec489933" },
+]
+
+const currentUser = page.props.currentUser
+const userColor = CURSOR_COLORS[currentUser.id % CURSOR_COLORS.length]
+awareness.setLocalStateField("user", { name: currentUser.name, ...userColor })
+
+const activeUsers = ref([])
+
+awareness.on("change", () => {
+  const users = []
+  awareness.getStates().forEach((state, clientId) => {
+    if (clientId !== ydoc.clientID && state.user) {
+      users.push(state.user)
+    }
+  })
+  activeUsers.value = users
+})
+
+function broadcastAwareness() {
+  if (!subscription) return
+  const update = encodeAwarenessUpdate(awareness, [ydoc.clientID])
+  const base64 = btoa(String.fromCharCode(...update))
+  subscription.send({ type: "awareness", update: base64, sender: String(ydoc.clientID) })
+}
+
+let awarenessDebounceTimer = null
+
+awareness.on("update", ({ added, updated, removed }, origin) => {
+  if (origin === "remote" || !subscription) return
+  clearTimeout(awarenessDebounceTimer)
+  awarenessDebounceTimer = setTimeout(broadcastAwareness, 50)
+})
+
 // Action Cable
 let subscription = null
 const consumer = createConsumer()
@@ -174,7 +219,7 @@ onMounted(() => {
   // from the Y.js sync received via the DocumentChannel to avoid duplication.
   const state = EditorState.create({
     doc: "",
-    extensions: [basicSetup, editorTheme, markdown(), yCollab(ytext, null, { undoManager })],
+    extensions: [basicSetup, editorTheme, markdown(), yCollab(ytext, awareness, { undoManager })],
   })
 
   editorView.value = new EditorView({
@@ -188,6 +233,7 @@ onMounted(() => {
     {
       connected() {
         connectionStatus.value = "connected"
+        broadcastAwareness()
       },
 
       disconnected() {
@@ -196,7 +242,13 @@ onMounted(() => {
 
       received(data) {
         if (data.type === "sync") {
-          applyRemoteState(data.state)
+          Y.transact(
+            ydoc,
+            () => {
+              applyRemoteState(data.state)
+            },
+            "remote",
+          )
           connectionStatus.value = "connected"
         } else if (data.type === "update") {
           if (String(data.sender) !== String(ydoc.clientID)) {
@@ -207,6 +259,11 @@ onMounted(() => {
               },
               "remote",
             )
+          }
+        } else if (data.type === "awareness") {
+          if (String(data.sender) !== String(ydoc.clientID)) {
+            const bytes = Uint8Array.from(atob(data.update), (c) => c.charCodeAt(0))
+            applyAwarenessUpdate(awareness, bytes, "remote")
           }
         } else if (data.type === "saved") {
           saving.value = false
@@ -230,6 +287,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   clearAutoSaveTimer()
+  if (awarenessDebounceTimer) clearTimeout(awarenessDebounceTimer)
   if (pendingSaveTimer) clearTimeout(pendingSaveTimer)
   if (subscription) {
     subscription.unsubscribe()
@@ -239,6 +297,7 @@ onBeforeUnmount(() => {
   if (editorView.value) {
     editorView.value.destroy()
   }
+  awareness.destroy()
   ydoc.destroy()
 })
 
@@ -301,6 +360,23 @@ function save() {
       />
 
       <USeparator orientation="vertical" class="h-5" />
+
+      <div v-if="activeUsers.length" class="flex items-center -space-x-1.5">
+        <UTooltip
+          v-for="(user, i) in activeUsers.slice(0, 3)"
+          :key="i"
+          :text="user.name"
+          :delay-duration="0"
+          :content="{ side: 'bottom', sideOffset: 8, class: 'z-[60]' }"
+        >
+          <span
+            class="inline-flex items-center justify-center size-6 rounded-full text-[10px] font-medium text-white ring-2 ring-(--ui-bg-elevated)"
+            :style="{ backgroundColor: user.color }"
+          >
+            {{ user.name?.[0] }}
+          </span>
+        </UTooltip>
+      </div>
 
       <div class="flex items-center gap-1.5">
         <UIcon

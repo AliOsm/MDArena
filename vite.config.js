@@ -23,4 +23,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./app/javascript', import.meta.url)),
     },
   },
+  optimizeDeps: {
+    include: ['y-protocols/awareness'],
+  },
 })

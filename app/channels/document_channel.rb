@@ -27,6 +27,12 @@ class DocumentChannel < ApplicationCable::Channel
     case data["type"]
     when "update"
       handle_update(data)
+    when "awareness"
+      ActionCable.server.broadcast(@stream_name, {
+        type: "awareness",
+        update: data["update"],
+        sender: data["sender"]
+      })
     when "save"
       flush_ydoc_to_git
       transmit({ type: "saved" })

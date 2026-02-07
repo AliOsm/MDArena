@@ -2353,6 +2353,7 @@ __metadata:
     vite-plugin-ruby: "npm:5.1.0"
     vue: "npm:^3.5.17"
     y-codemirror.next: "npm:^0.3.5"
+    y-protocols: "npm:^1.0.7"
     yjs: "npm:^13.6.27"
   languageName: unknown
   linkType: soft
@@ -3548,7 +3549,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lib0@npm:^0.2.42, lib0@npm:^0.2.99":
+"lib0@npm:^0.2.42, lib0@npm:^0.2.85, lib0@npm:^0.2.99":
   version: 0.2.117
   resolution: "lib0@npm:0.2.117"
   dependencies:
@@ -5662,6 +5663,17 @@ __metadata:
     "@codemirror/view": ^6.0.0
     yjs: ^13.5.6
   checksum: 10c0/2788c6d9f429e89d9b5b1c180cb712b5737cc8dd6c5654d1de3e5422ee863e1301c2a8e44273929434a55e62208ee1a6cdc02a5d354999d4a47ec1f3c8002525
+  languageName: node
+  linkType: hard
+
+"y-protocols@npm:^1.0.7":
+  version: 1.0.7
+  resolution: "y-protocols@npm:1.0.7"
+  dependencies:
+    lib0: "npm:^0.2.85"
+  peerDependencies:
+    yjs: ^13.0.0
+  checksum: 10c0/70e14ab50b9200e97602c5effc3e14ae4ea0f51479a1628569af7cc12a6739fbc02484335828f5c508a4bf6fa0c3ef5ae1c17e13346b7a6093abeb9627f59021
   languageName: node
   linkType: hard
 
