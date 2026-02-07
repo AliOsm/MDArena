@@ -60,7 +60,7 @@ function submit() {
           </div>
         </div>
 
-        <p class="text-sm text-red-400">&copy; 2025 MDArena</p>
+        <p class="text-sm text-red-400">&copy; 2026 MDArena</p>
       </div>
 
       <!-- Right panel: form -->
@@ -80,6 +80,7 @@ function submit() {
             <form class="space-y-4" @submit.prevent="submit">
               <UFormField label="Email" :error="page.props.errors?.email">
                 <UInput
+                  class="w-full"
                   v-model="form.email"
                   type="email"
                   placeholder="you@example.com"
@@ -91,6 +92,7 @@ function submit() {
 
               <UFormField label="Password" :error="page.props.errors?.password">
                 <UInput
+                  class="w-full"
                   v-model="form.password"
                   type="password"
                   placeholder="Your password"

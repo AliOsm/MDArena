@@ -36,6 +36,77 @@ const wordCount = computed(() => {
 
 const charCount = computed(() => editorContent.value.length)
 
+// CodeMirror theme using Nuxt UI CSS variables (adapts to light/dark mode)
+const editorTheme = EditorView.theme({
+  "&": {
+    fontSize: "14px",
+  },
+  "&.cm-focused": {
+    outline: "none",
+  },
+  ".cm-scroller": {
+    fontFamily: "ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace",
+    lineHeight: "1.6",
+  },
+  ".cm-content": {
+    padding: "8px 0",
+    caretColor: "var(--ui-primary)",
+  },
+  ".cm-line": {
+    padding: "0 16px",
+  },
+  ".cm-cursor, .cm-dropCursor": {
+    borderLeftColor: "var(--ui-primary)",
+    borderLeftWidth: "2px",
+  },
+  "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground": {
+    background: "color-mix(in srgb, var(--ui-primary) 25%, transparent)",
+  },
+  ".cm-selectionBackground": {
+    background: "color-mix(in srgb, var(--ui-primary) 15%, transparent)",
+  },
+  ".cm-activeLine": {
+    backgroundColor: "var(--ui-bg-accented)",
+  },
+  ".cm-gutters": {
+    backgroundColor: "var(--ui-bg)",
+    borderRight: "1px solid var(--ui-border)",
+    color: "var(--ui-text-dimmed)",
+  },
+  ".cm-lineNumbers .cm-gutterElement": {
+    padding: "0 8px 0 16px",
+    fontSize: "12px",
+  },
+  ".cm-activeLineGutter": {
+    backgroundColor: "var(--ui-bg-accented)",
+  },
+  ".cm-matchingBracket": {
+    backgroundColor: "color-mix(in srgb, var(--ui-primary) 30%, transparent)",
+    outline: "1px solid color-mix(in srgb, var(--ui-primary) 50%, transparent)",
+  },
+  ".cm-searchMatch": {
+    backgroundColor: "color-mix(in srgb, var(--ui-warning) 30%, transparent)",
+  },
+  ".cm-searchMatch.cm-searchMatch-selected": {
+    backgroundColor: "color-mix(in srgb, var(--ui-primary) 30%, transparent)",
+  },
+  ".cm-panels": {
+    backgroundColor: "var(--ui-bg-elevated)",
+    color: "var(--ui-text)",
+  },
+  ".cm-panels.cm-panels-top": {
+    borderBottom: "1px solid var(--ui-border)",
+  },
+  ".cm-panels.cm-panels-bottom": {
+    borderTop: "1px solid var(--ui-border)",
+  },
+  ".cm-tooltip": {
+    backgroundColor: "var(--ui-bg-elevated)",
+    border: "1px solid var(--ui-border)",
+    borderRadius: "6px",
+  },
+})
+
 // Y.js setup
 const ydoc = new Y.Doc()
 const ytext = ydoc.getText("content")
@@ -103,7 +174,7 @@ onMounted(() => {
   // from the Y.js sync received via the DocumentChannel to avoid duplication.
   const state = EditorState.create({
     doc: "",
-    extensions: [basicSetup, markdown(), yCollab(ytext, null, { undoManager })],
+    extensions: [basicSetup, editorTheme, markdown(), yCollab(ytext, null, { undoManager })],
   })
 
   editorView.value = new EditorView({
@@ -187,99 +258,91 @@ function save() {
 </script>
 
 <template>
-  <div class="flex flex-col flex-1 min-h-0">
-    <!-- Toolbar -->
-    <div
-      class="relative z-50 flex h-12 shrink-0 items-center gap-2 border-b border-(--ui-border) bg-(--ui-bg-elevated) px-4"
-    >
+  <!-- Toolbar - fixed at viewport top -->
+  <div
+    class="fixed top-0 inset-x-0 z-50 flex h-12 items-center gap-2 border-b border-(--ui-border) bg-(--ui-bg-elevated) px-4"
+  >
+    <UButton
+      icon="i-lucide-arrow-left"
+      size="xs"
+      variant="ghost"
+      color="neutral"
+      @click="router.visit(`/projects/${project.slug}/files/${path}`)"
+    />
+
+    <USeparator orientation="vertical" class="h-5" />
+
+    <div class="flex items-center gap-1 text-sm text-(--ui-text-muted) min-w-0">
+      <span class="truncate">{{ project.name }}</span>
+      <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0" />
+      <span class="truncate font-medium text-(--ui-text)">{{ path }}</span>
+    </div>
+
+    <div class="ml-auto flex items-center gap-2">
+      <span class="hidden sm:inline text-xs text-(--ui-text-dimmed) tabular-nums">
+        {{ wordCount }} words &middot; {{ charCount }} chars
+      </span>
+
+      <USeparator orientation="vertical" class="hidden sm:block h-5" />
+
       <UButton
-        icon="i-lucide-arrow-left"
+        icon="i-lucide-save"
+        label="Save"
+        size="xs"
+        :loading="saving"
+        @click="save"
+      />
+      <UButton
+        :icon="previewVisible ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
         size="xs"
         variant="ghost"
         color="neutral"
-        @click="router.visit(`/projects/${project.slug}/files/${path}`)"
+        @click="previewVisible = !previewVisible"
       />
 
       <USeparator orientation="vertical" class="h-5" />
 
-      <div class="flex items-center gap-1 text-sm text-(--ui-text-muted) min-w-0">
-        <span class="truncate">{{ project.name }}</span>
-        <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0" />
-        <span class="truncate font-medium text-(--ui-text)">{{ path }}</span>
-      </div>
-
-      <div class="ml-auto flex items-center gap-2">
-        <UButton
-          icon="i-lucide-save"
-          label="Save"
-          size="xs"
-          :loading="saving"
-          @click="save"
+      <div class="flex items-center gap-1.5">
+        <UIcon
+          name="i-lucide-wifi"
+          class="size-4"
+          :class="connectionStatus === 'connected' ? 'text-(--ui-success)' : 'text-(--ui-error)'"
         />
-        <UButton
-          :icon="previewVisible ? 'i-lucide-panel-right-close' : 'i-lucide-panel-right-open'"
+        <UBadge
+          :color="connectionStatus === 'connected' ? 'success' : 'error'"
+          variant="subtle"
           size="xs"
-          variant="ghost"
-          color="neutral"
-          @click="previewVisible = !previewVisible"
+          :label="connectionStatus"
         />
-
-        <USeparator orientation="vertical" class="h-5" />
-
-        <div class="flex items-center gap-1.5">
-          <UIcon
-            name="i-lucide-wifi"
-            class="size-4"
-            :class="connectionStatus === 'connected' ? 'text-(--ui-success)' : 'text-(--ui-error)'"
-          />
-          <UBadge
-            :color="connectionStatus === 'connected' ? 'success' : 'error'"
-            variant="subtle"
-            size="xs"
-            :label="connectionStatus"
-          />
-        </div>
       </div>
     </div>
-
-    <!-- Split pane editor/preview -->
-    <UDashboardGroup storage-key="editor-split" class="flex-1 min-h-0">
-      <UDashboardPanel id="editor-panel">
-        <template #header>
-          <div class="flex items-center justify-between w-full px-4 text-sm">
-            <span class="font-medium text-(--ui-text-muted)">Editor</span>
-            <span class="text-xs text-(--ui-text-dimmed)">
-              {{ wordCount }} words &middot; {{ charCount }} chars
-            </span>
-          </div>
-        </template>
-        <template #body>
-          <div
-            ref="editorContainer"
-            class="h-full [&_.cm-editor]:h-full [&_.cm-editor]:outline-none"
-          />
-        </template>
-      </UDashboardPanel>
-
-      <UDashboardPanel
-        v-if="previewVisible"
-        id="preview-panel"
-        resizable
-        :default-size="50"
-        :min-size="25"
-        :max-size="70"
-      >
-        <template #header>
-          <div class="px-4 text-sm">
-            <span class="font-medium text-(--ui-text-muted)">Preview</span>
-          </div>
-        </template>
-        <template #body>
-          <div class="p-6 overflow-auto h-full">
-            <MarkdownPreview :content="editorContent" />
-          </div>
-        </template>
-      </UDashboardPanel>
-    </UDashboardGroup>
   </div>
+
+  <!-- Split pane editor/preview - offset below toolbar -->
+  <UDashboardGroup storage-key="editor-split" class="editor-top-offset">
+    <UDashboardPanel id="editor-panel" :ui="{ root: 'min-h-0', body: 'p-0 sm:p-0' }">
+      <template #body>
+        <div
+          ref="editorContainer"
+          class="h-full [&_.cm-editor]:h-full [&_.cm-editor]:outline-none"
+        />
+      </template>
+    </UDashboardPanel>
+
+    <UDashboardPanel
+      v-if="previewVisible"
+      id="preview-panel"
+      resizable
+      :default-size="50"
+      :min-size="25"
+      :max-size="70"
+      :ui="{ root: 'min-h-0', body: 'p-0 sm:p-0' }"
+    >
+      <template #body>
+        <div class="p-6 overflow-auto h-full">
+          <MarkdownPreview :content="editorContent" />
+        </div>
+      </template>
+    </UDashboardPanel>
+  </UDashboardGroup>
 </template>

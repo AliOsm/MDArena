@@ -62,7 +62,7 @@ function submit() {
           </div>
         </div>
 
-        <p class="text-sm text-red-400">&copy; 2025 MDArena</p>
+        <p class="text-sm text-red-400">&copy; 2026 MDArena</p>
       </div>
 
       <!-- Right panel: form -->
@@ -82,6 +82,7 @@ function submit() {
             <form class="space-y-4" @submit.prevent="submit">
               <UFormField label="Name" :error="page.props.errors?.name?.[0]">
                 <UInput
+                  class="w-full"
                   v-model="form.name"
                   type="text"
                   placeholder="Your name"
@@ -93,6 +94,7 @@ function submit() {
 
               <UFormField label="Email" :error="page.props.errors?.email?.[0]">
                 <UInput
+                  class="w-full"
                   v-model="form.email"
                   type="email"
                   placeholder="you@example.com"
@@ -103,6 +105,7 @@ function submit() {
 
               <UFormField label="Password" :error="page.props.errors?.password?.[0]">
                 <UInput
+                  class="w-full"
                   v-model="form.password"
                   type="password"
                   placeholder="Choose a password"
@@ -113,6 +116,7 @@ function submit() {
 
               <UFormField label="Confirm password" :error="page.props.errors?.password_confirmation?.[0]">
                 <UInput
+                  class="w-full"
                   v-model="form.password_confirmation"
                   type="password"
                   placeholder="Confirm your password"
