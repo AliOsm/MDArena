@@ -6,7 +6,7 @@ const page = usePage()
 const currentUser = page.props.currentUser
 
 const avatarUrl = computed(() =>
-  currentUser?.id ? `https://api.dicebear.com/9.x/thumbs/svg?seed=${currentUser.id}` : null,
+  currentUser?.id ? `https://api.dicebear.com/9.x/notionists/svg?seed=${currentUser.id}` : null,
 )
 
 const currentPath = computed(() => page.url)

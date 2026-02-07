@@ -66,11 +66,12 @@ function createProject() {
         @click="router.visit(`/projects/${project.slug}`)"
       >
         <div class="flex items-start gap-3">
-          <div
-            class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--ui-primary)/10"
-          >
-            <UIcon name="i-lucide-folder" class="size-5 text-(--ui-primary)" />
-          </div>
+          <UAvatar
+            :src="`https://api.dicebear.com/9.x/notionists/svg?seed=${project.ownerId}`"
+            :label="project.ownerName?.[0]"
+            size="md"
+            class="shrink-0"
+          />
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
               <h2 class="font-semibold truncate">{{ project.name }}</h2>

@@ -14,6 +14,12 @@ const copied = ref(false)
 
 const cloneCommand = `git clone ${project.cloneUrl}`
 
+const ownerAvatarUrl = computed(() =>
+  project.ownerId
+    ? `https://api.dicebear.com/9.x/notionists/svg?seed=${project.ownerId}`
+    : null,
+)
+
 function createFile() {
   let name = fileName.value.trim()
   if (!name) return
@@ -52,13 +58,10 @@ function copyCloneUrl() {
     <!-- Header -->
     <div class="mb-6 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div
-          class="flex size-10 items-center justify-center rounded-lg bg-(--ui-primary)/10"
-        >
-          <UIcon name="i-lucide-folder" class="size-5 text-(--ui-primary)" />
-        </div>
+        <UAvatar :src="ownerAvatarUrl" :label="project.ownerName?.[0]" size="lg" />
         <div>
           <h1 class="text-2xl font-bold">{{ project.name }}</h1>
+          <p class="text-sm text-(--ui-text-muted)">{{ project.ownerName }}</p>
         </div>
         <UBadge
           :label="project.role"

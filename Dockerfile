@@ -74,18 +74,29 @@ RUN rm -rf node_modules
 # Final stage for app image
 FROM base
 
+# Install nginx, git, and fcgiwrap for serving git over HTTP
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y nginx git fcgiwrap spawn-fcgi && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
-USER 1000:1000
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    mkdir -p /tmp/nginx/client_body /tmp/nginx/proxy /tmp/nginx/fastcgi /tmp/nginx/uwsgi /tmp/nginx/scgi && \
+    chown -R rails:rails /tmp/nginx /var/log/nginx
 
 # Copy built artifacts: gems, application
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
 
+# Copy production nginx config
+RUN cp /rails/config/nginx/nginx.conf /etc/nginx/nginx.conf
+
+USER 1000:1000
+
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
-# Start server via Thruster by default, this can be overwritten at runtime
+# Start nginx + puma + fcgiwrap via start-server
 EXPOSE 80
-CMD ["./bin/thrust", "./bin/rails", "server"]
+CMD ["./bin/start-server"]

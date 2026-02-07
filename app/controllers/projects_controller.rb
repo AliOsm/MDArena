@@ -61,8 +61,7 @@ class ProjectsController < ApplicationController
   end
 
   def clone_url_for(project)
-    base = ENV.fetch("GIT_HTTP_BASE_URL") { "#{request.protocol}#{request.host_with_port}" }
-    "#{base}/git/#{project.slug}.git"
+    "#{request.protocol}#{request.host_with_port}/git/#{project.slug}.git"
   end
 
   def serialize_project(project)
@@ -73,6 +72,7 @@ class ProjectsController < ApplicationController
       slug: project.slug,
       uuid: project.uuid,
       role: membership&.role,
+      ownerId: project.owner.id,
       ownerName: project.owner.name,
       updatedAt: project.updated_at,
       cloneUrl: clone_url_for(project)

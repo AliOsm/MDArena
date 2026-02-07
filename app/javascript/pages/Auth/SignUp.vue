@@ -28,41 +28,41 @@ function submit() {
     <div class="flex min-h-screen">
       <!-- Left panel: branding (hidden on small screens) -->
       <div
-        class="hidden lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-red-900 via-red-800 to-red-950 p-12 text-white"
+        class="hidden lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-stone-950 via-red-950 to-stone-950 p-12 text-white"
       >
         <div>
           <div class="flex items-center gap-3">
             <UIcon name="i-lucide-swords" class="size-8" />
             <span class="text-2xl font-bold">MDArena</span>
           </div>
-          <p class="mt-4 text-lg text-red-200">Collaborative Markdown, powered by Git.</p>
+          <p class="mt-4 text-lg text-stone-400">Collaborative Markdown, powered by Git.</p>
         </div>
 
         <div class="space-y-6">
           <div class="flex items-start gap-3">
-            <UIcon name="i-lucide-git-branch" class="size-5 mt-0.5 shrink-0 text-red-300" />
+            <UIcon name="i-lucide-git-branch" class="size-5 mt-0.5 shrink-0 text-red-400" />
             <div>
               <p class="font-semibold">Git-backed versioning</p>
-              <p class="text-sm text-red-200">Every edit is a commit. Full history, always.</p>
+              <p class="text-sm text-stone-400">Every edit is a commit. Full history, always.</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
-            <UIcon name="i-lucide-users" class="size-5 mt-0.5 shrink-0 text-red-300" />
+            <UIcon name="i-lucide-users" class="size-5 mt-0.5 shrink-0 text-red-400" />
             <div>
               <p class="font-semibold">Real-time collaboration</p>
-              <p class="text-sm text-red-200">Edit together with conflict-free sync.</p>
+              <p class="text-sm text-stone-400">Edit together with conflict-free sync.</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
-            <UIcon name="i-lucide-terminal" class="size-5 mt-0.5 shrink-0 text-red-300" />
+            <UIcon name="i-lucide-terminal" class="size-5 mt-0.5 shrink-0 text-red-400" />
             <div>
               <p class="font-semibold">Clone over HTTPS</p>
-              <p class="text-sm text-red-200">Use your favorite tools. Push and pull like any repo.</p>
+              <p class="text-sm text-stone-400">Use your favorite tools. Push and pull like any repo.</p>
             </div>
           </div>
         </div>
 
-        <p class="text-sm text-red-300">&copy; 2025 MDArena</p>
+        <p class="text-sm text-red-400">&copy; 2025 MDArena</p>
       </div>
 
       <!-- Right panel: form -->

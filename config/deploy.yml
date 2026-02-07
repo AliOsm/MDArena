@@ -23,7 +23,7 @@ servers:
 proxy:
   ssl: true
   host: app.example.com
-  app_port: 3000
+  app_port: 80
 
 registry:
   server: ghcr.io
@@ -54,16 +54,6 @@ accessories:
         - POSTGRES_PASSWORD
     directories:
       - pgdata:/var/lib/postgresql/data
-
-  nginx:
-    image: nginx:alpine
-    host: 192.168.0.1
-    port: "443:443"
-    volumes:
-      - /var/repos:/var/repos:ro
-      - /etc/ssl:/etc/ssl:ro
-    files:
-      - config/nginx/app.conf:/etc/nginx/conf.d/default.conf
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"

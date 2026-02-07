@@ -5,4 +5,8 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare
 fi
 
+if [ "${1}" == "./bin/start-server" ]; then
+  ./bin/rails db:prepare
+fi
+
 exec "${@}"

@@ -194,7 +194,7 @@ function save() {
   <div class="flex flex-col flex-1 min-h-0">
     <!-- Toolbar -->
     <div
-      class="relative z-10 flex h-12 shrink-0 items-center gap-2 border-b border-(--ui-border) bg-(--ui-bg-elevated) px-4"
+      class="relative z-50 flex h-12 shrink-0 items-center gap-2 border-b border-(--ui-border) bg-(--ui-bg-elevated) px-4"
     >
       <UButton
         icon="i-lucide-arrow-left"
