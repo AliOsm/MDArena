@@ -14,8 +14,6 @@ const project = page.props.project
 const path = page.props.path
 const initialContent = page.props.content
 const headSha = page.props.headSha
-const currentUserId = page.props.currentUser.id
-
 const toast = useToast()
 
 const editorContainer = ref(null)
@@ -48,7 +46,7 @@ function applyRemoteState(base64State) {
 function sendUpdate(update) {
   if (!subscription) return
   const base64 = btoa(String.fromCharCode(...update))
-  subscription.send({ type: "update", update: base64, sender: String(currentUserId) })
+  subscription.send({ type: "update", update: base64, sender: String(ydoc.clientID) })
 }
 
 // Auto-save timer (60 seconds of inactivity)
@@ -59,8 +57,12 @@ function resetAutoSaveTimer() {
   if (autoSaveTimer) clearTimeout(autoSaveTimer)
   autoSaveTimer = setTimeout(() => {
     if (subscription) {
+      pendingSave = true
       subscription.send({ type: "save" })
-      toast.add({ title: "Auto-saved", color: "neutral" })
+      if (pendingSaveTimer) clearTimeout(pendingSaveTimer)
+      pendingSaveTimer = setTimeout(() => {
+        pendingSave = false
+      }, 30_000)
     }
   }, AUTO_SAVE_DELAY)
 }
@@ -85,8 +87,10 @@ ydoc.on("update", (update, origin) => {
 
 onMounted(() => {
   // Initialize CodeMirror with yCollab for real-time collaborative editing
+  // Don't set doc: initialContent here — yCollab will populate the editor
+  // from the Y.js sync received via the DocumentChannel to avoid duplication.
   const state = EditorState.create({
-    doc: initialContent || "",
+    doc: "",
     extensions: [basicSetup, markdown(), yCollab(ytext, null, { undoManager })],
   })
 
@@ -112,7 +116,7 @@ onMounted(() => {
           applyRemoteState(data.state)
           connectionStatus.value = "connected"
         } else if (data.type === "update") {
-          if (String(data.sender) !== String(currentUserId)) {
+          if (String(data.sender) !== String(ydoc.clientID)) {
             Y.transact(
               ydoc,
               () => {
@@ -121,14 +125,22 @@ onMounted(() => {
               "remote",
             )
           }
+        } else if (data.type === "saved") {
+          saving.value = false
+          toast.add({ title: "File saved", color: "success" })
         } else if (data.type === "file_changed") {
-          fileChangedExternally.value = true
-          toast.add({
-            title: "File changed externally",
-            description:
-              "This file was changed outside the editor. Please refresh to get the latest version.",
-            color: "warning",
-          })
+          if (pendingSave) {
+            // This change was triggered by our own save — ignore it
+            pendingSave = false
+          } else {
+            fileChangedExternally.value = true
+            toast.add({
+              title: "File changed externally",
+              description:
+                "This file was changed outside the editor. Please refresh to get the latest version.",
+              color: "warning",
+            })
+          }
         }
       },
     },
@@ -137,6 +149,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   clearAutoSaveTimer()
+  if (pendingSaveTimer) clearTimeout(pendingSaveTimer)
   if (subscription) {
     subscription.unsubscribe()
     subscription = null
@@ -148,15 +161,21 @@ onBeforeUnmount(() => {
   ydoc.destroy()
 })
 
+let pendingSave = false
+let pendingSaveTimer = null
+
 function save() {
   if (!subscription) return
   saving.value = true
+  pendingSave = true
   subscription.send({ type: "save" })
-  toast.add({
-    title: "File saved",
-    color: "success",
-  })
-  saving.value = false
+
+  // Suppress file_changed events for 30 seconds after save
+  // since the commit is expected and not an external change
+  if (pendingSaveTimer) clearTimeout(pendingSaveTimer)
+  pendingSaveTimer = setTimeout(() => {
+    pendingSave = false
+  }, 30_000)
 }
 </script>
 

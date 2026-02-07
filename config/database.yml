@@ -22,6 +22,8 @@ default: &default
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
+  # Disable GSSAPI to prevent segfaults when forking processes (parallel tests)
+  gssencmode: disable
 
 development:
   primary:

@@ -104,26 +104,6 @@ class FilesControllerTest < ActionDispatch::IntegrationTest
     assert_empty GitService.list_files(@project)
   end
 
-  # -- download_md --
-
-  test "download_md sends markdown file as attachment" do
-    get project_download_md_file_path(@project.slug, "readme.md")
-
-    assert_response :success
-    assert_equal "# Hello\n", response.body
-    assert_match "attachment", response.headers["Content-Disposition"]
-  end
-
-  # -- download_pdf --
-
-  test "download_pdf enqueues PdfExportJob and redirects" do
-    assert_enqueued_with(job: PdfExportJob) do
-      post project_download_pdf_file_path(@project.slug, "readme.md")
-    end
-
-    assert_response :redirect
-  end
-
   # -- auth --
 
   test "actions require authentication" do

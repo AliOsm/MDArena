@@ -36,5 +36,9 @@ class FlushYdocToGitJob < ApplicationJob
       user: auto_save_user,
       message: "Auto-save #{file_path}"
     )
+
+    # Store the new HEAD so check_head_changed knows this was a flush, not an external change
+    flush_head_key = "last_flush_head:#{project_id}:#{file_path}"
+    Rails.cache.write(flush_head_key, GitService.head_sha(project), expires_in: 60.seconds)
   end
 end

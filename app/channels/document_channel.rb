@@ -28,7 +28,8 @@ class DocumentChannel < ApplicationCable::Channel
     when "update"
       handle_update(data)
     when "save"
-      FlushYdocToGitJob.perform_later(@project.id, @file_path)
+      flush_ydoc_to_git
+      transmit({ type: "saved" })
     end
   end
 
@@ -46,6 +47,15 @@ class DocumentChannel < ApplicationCable::Channel
     return if current_head.nil? || current_head == @last_known_head
 
     @last_known_head = current_head
+
+    # Skip broadcasting if this HEAD change was from a ydoc flush (not an external change)
+    flush_head_key = "last_flush_head:#{@project.id}:#{@file_path}"
+    last_flush_head = Rails.cache.read(flush_head_key)
+    return if last_flush_head == current_head
+
+    # Invalidate stale Y.js cache so refresh loads fresh content from git
+    Rails.cache.delete(@cache_key)
+
     ActionCable.server.broadcast(@stream_name, { type: "file_changed" })
   end
 
@@ -87,6 +97,35 @@ class DocumentChannel < ApplicationCable::Channel
 
     # Enqueue flush with 30-second delay
     FlushYdocToGitJob.set(wait: 30.seconds).perform_later(@project.id, @file_path)
+  end
+
+  def flush_ydoc_to_git
+    cached_state = Rails.cache.read(@cache_key)
+    return unless cached_state
+
+    doc = Y::Doc.new
+    doc.sync(cached_state)
+    content = doc.get_text("content").to_s
+
+    existing_content = begin
+      GitService.read_file(@project, @file_path)
+    rescue GitService::FileNotFoundError
+      nil
+    end
+
+    return if content == existing_content
+
+    GitService.commit_file(
+      project: @project,
+      path: @file_path,
+      content: content,
+      user: current_user,
+      message: "Save #{@file_path}"
+    )
+
+    flush_head_key = "last_flush_head:#{@project.id}:#{@file_path}"
+    Rails.cache.write(flush_head_key, GitService.head_sha(@project), expires_in: 60.seconds)
+    @last_known_head = GitService.head_sha(@project)
   end
 
   def load_or_init_ydoc

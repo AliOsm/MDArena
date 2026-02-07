@@ -1495,6 +1495,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tailwindcss/typography@npm:^0.5.19":
+  version: 0.5.19
+  resolution: "@tailwindcss/typography@npm:0.5.19"
+  dependencies:
+    postcss-selector-parser: "npm:6.0.10"
+  peerDependencies:
+    tailwindcss: "*"
+  checksum: 10c0/b9eb38e9c7adca59b55d7321275f59ea62c7d65a0c3d324c18c1c5864c69ec6e15b838e7df61e531cda62cfea08627b4343bc419bb0996182321891e5171e4d6
+  languageName: node
+  linkType: hard
+
 "@tailwindcss/vite@npm:^4.1.18":
   version: 4.1.18
   resolution: "@tailwindcss/vite@npm:4.1.18"
@@ -2101,13 +2112,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/devtools-api@npm:^6.6.4":
-  version: 6.6.4
-  resolution: "@vue/devtools-api@npm:6.6.4"
-  checksum: 10c0/0a993ae23618166e1bee5a7c14cebd8312752b93c143cbdd48fb2d0f7ade070d0e6baf757cd920d4681fef8f9acf29515162160f38cc7410f9a684d2df21b6de
-  languageName: node
-  linkType: hard
-
 "@vue/reactivity@npm:3.5.27":
   version: 3.5.27
   resolution: "@vue/reactivity@npm:3.5.27"
@@ -2337,6 +2341,7 @@ __metadata:
     "@inertiajs/vue3": "npm:^2.0.6"
     "@nuxt/ui": "npm:^4.4.0"
     "@rails/actioncable": "npm:^8.1.200"
+    "@tailwindcss/typography": "npm:^0.5.19"
     "@vitejs/plugin-vue": "npm:^5.2.4"
     codemirror: "npm:^6.0.1"
     markdown-it: "npm:^14.1.0"
@@ -2347,7 +2352,6 @@ __metadata:
     vite: "npm:^6.4.1"
     vite-plugin-ruby: "npm:5.1.0"
     vue: "npm:^3.5.17"
-    vue-router: "npm:^4.5.0"
     y-codemirror.next: "npm:^0.3.5"
     yjs: "npm:^13.6.27"
   languageName: unknown
@@ -2622,6 +2626,15 @@ __metadata:
     mdn-data: "npm:2.12.2"
     source-map-js: "npm:^1.0.1"
   checksum: 10c0/b5715852c2f397c715ca00d56ec53fc83ea596295ae112eb1ba6a1bda3b31086380e596b1d8c4b980fe6da09e7d0fc99c64d5bb7313030dd0fba9c1415f30979
+  languageName: node
+  linkType: hard
+
+"cssesc@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "cssesc@npm:3.0.0"
+  bin:
+    cssesc: bin/cssesc
+  checksum: 10c0/6bcfd898662671be15ae7827120472c5667afb3d7429f1f917737f3bf84c4176003228131b643ae74543f17a394446247df090c597bb9a728cce298606ed0aa7
   languageName: node
   linkType: hard
 
@@ -4428,6 +4441,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss-selector-parser@npm:6.0.10":
+  version: 6.0.10
+  resolution: "postcss-selector-parser@npm:6.0.10"
+  dependencies:
+    cssesc: "npm:^3.0.0"
+    util-deprecate: "npm:^1.0.2"
+  checksum: 10c0/a0b27c5e3f7604c8dc7cd83f145fdd7b21448e0d86072da99e0d78e536ba27aa9db2d42024c50aa530408ee517c4bdc0260529e1afb56608f9a82e839c207e82
+  languageName: node
+  linkType: hard
+
 "postcss@npm:^8.4.41, postcss@npm:^8.5.3, postcss@npm:^8.5.6":
   version: 8.5.6
   resolution: "postcss@npm:8.5.6"
@@ -5457,6 +5480,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"util-deprecate@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "util-deprecate@npm:1.0.2"
+  checksum: 10c0/41a5bdd214df2f6c3ecf8622745e4a366c4adced864bc3c833739791aeeeb1838119af7daed4ba36428114b5c67dcda034a79c882e97e43c03e66a4dd7389942
+  languageName: node
+  linkType: hard
+
 "vaul-vue@npm:0.4.1":
   version: 0.4.1
   resolution: "vaul-vue@npm:0.4.1"
@@ -5558,17 +5588,6 @@ __metadata:
     vue-demi-fix: bin/vue-demi-fix.js
     vue-demi-switch: bin/vue-demi-switch.js
   checksum: 10c0/a9ed8712fa36d01bc13c39757f95f30cebf42d557b99e94bff86d8660c81f2911b41220f7affc023d1ffcc19e13999e4a83019991e264787cca2c616e83aea48
-  languageName: node
-  linkType: hard
-
-"vue-router@npm:^4.5.0":
-  version: 4.6.4
-  resolution: "vue-router@npm:4.6.4"
-  dependencies:
-    "@vue/devtools-api": "npm:^6.6.4"
-  peerDependencies:
-    vue: ^3.5.0
-  checksum: 10c0/9dcbe1124f1f444ae263ca37914829eea1ebff3feaa182559efee611dfd4436bbebe0ebffdcb60e37fecfb2fbdc691346df00996eeba708485e9ea9b8a7dd193
   languageName: node
   linkType: hard
 

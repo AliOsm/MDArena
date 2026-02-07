@@ -1,5 +1,5 @@
 class HomeController < ApplicationController
   def index
-    render inertia: "Home"
+    redirect_to projects_path
   end
 end

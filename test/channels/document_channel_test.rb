@@ -167,12 +167,21 @@ class DocumentChannelTest < ActionCable::Channel::TestCase
     end
   end
 
-  test "save message enqueues FlushYdocToGitJob" do
+  test "save message flushes ydoc to git synchronously" do
     subscribe(project_id: @project.id, file_path: @file_path)
 
-    assert_enqueued_with(job: FlushYdocToGitJob, args: [ @project.id, @file_path ]) do
-      perform :receive, { "type" => "save" }
-    end
+    # Populate cache so flush has content to commit
+    cache_key = "ydoc:#{@project.id}:#{@file_path}"
+    doc = Y::Doc.new
+    text = doc.get_text("content")
+    text.insert(0, "saved content")
+    Rails.cache.write(cache_key, doc.full_diff, expires_in: 2.hours)
+
+    perform :receive, { "type" => "save" }
+
+    content = GitService.read_file(@project, @file_path)
+
+    assert_equal "saved content", content
   end
 
   test "unsubscribe enqueues FlushYdocToGitJob with delay" do

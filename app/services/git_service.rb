@@ -9,7 +9,9 @@ class GitService
   end
 
   def self.init_repo(project)
-    Rugged::Repository.init_at(repo_path(project), :bare)
+    repo = Rugged::Repository.init_at(repo_path(project), :bare)
+    repo.head = "refs/heads/main"
+    repo
   end
 
   def self.with_repo_lock(project)

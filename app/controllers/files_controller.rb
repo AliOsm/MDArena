@@ -1,6 +1,6 @@
 class FilesController < ApplicationController
   before_action :set_project
-  before_action :set_file_path, only: [ :show, :edit, :update, :destroy, :download_md, :download_pdf ]
+  before_action :set_file_path, only: [ :show, :edit, :update, :destroy ]
 
   rescue_from GitService::FileNotFoundError, with: :file_not_found
 
@@ -67,17 +67,6 @@ class FilesController < ApplicationController
     )
 
     redirect_to project_path(@project.slug), notice: "File deleted."
-  end
-
-  def download_md
-    content = GitService.read_file(@project, @file_path)
-    send_data content, filename: @file_path, type: "text/markdown", disposition: :attachment
-  end
-
-  def download_pdf
-    PdfExportJob.perform_later(@project.id, @file_path, current_user.id)
-    redirect_back fallback_location: project_file_path(@project.slug, @file_path),
-                  notice: "PDF export started. You'll be notified when it's ready."
   end
 
   private

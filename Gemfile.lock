@@ -145,8 +145,6 @@ GEM
       fugit (>= 1.11.0)
       railties (>= 6.1.0)
       thor (>= 1.0.0)
-    grover (1.2.7)
-      nokogiri (~> 1)
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
     image_processing (1.14.0)
@@ -443,7 +441,6 @@ DEPENDENCIES
   debug
   devise
   good_job
-  grover
   image_processing (~> 1.2)
   inertia_rails
   jbuilder

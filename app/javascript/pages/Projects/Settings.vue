@@ -13,10 +13,10 @@ const role = ref("editor")
 const adding = ref(false)
 
 const columns = [
-  { key: "userName", label: "Name" },
-  { key: "userEmail", label: "Email" },
-  { key: "role", label: "Role" },
-  { key: "actions", label: "" },
+  { accessorKey: "userName", header: "Name" },
+  { accessorKey: "userEmail", header: "Email" },
+  { accessorKey: "role", header: "Role" },
+  { id: "actions" },
 ]
 
 const roleOptions = [
@@ -65,23 +65,23 @@ function removeMember(member) {
     <div class="mb-8">
       <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Members</h2>
 
-      <UTable v-if="members.length" :columns="columns" :rows="members">
+      <UTable v-if="members.length" :columns="columns" :data="members">
         <template #role-cell="{ row }">
           <UBadge
-            :label="row.role"
-            :color="row.role === 'owner' ? 'primary' : 'neutral'"
+            :label="row.original.role"
+            :color="row.original.role === 'owner' ? 'primary' : 'neutral'"
             variant="subtle"
           />
         </template>
 
         <template #actions-cell="{ row }">
           <UButton
-            v-if="row.userEmail !== page.props.currentUser?.email"
+            v-if="row.original.userEmail !== page.props.currentUser?.email"
             label="Remove"
             color="error"
             variant="ghost"
             size="xs"
-            @click="removeMember(row)"
+            @click="removeMember(row.original)"
           />
         </template>
       </UTable>

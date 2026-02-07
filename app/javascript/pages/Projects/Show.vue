@@ -1,10 +1,10 @@
 <script setup>
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { router, usePage } from "@inertiajs/vue3"
 
 const page = usePage()
 const project = page.props.project
-const files = page.props.files || []
+const files = computed(() => page.props.files || [])
 
 const showCreateModal = ref(false)
 const fileName = ref("")

@@ -15,8 +15,4 @@ class GoodJobConfigurationTest < ActiveSupport::TestCase
       CleanupExpiredTokensJob.perform_later
     end
   end
-
-  test "pdf export job enqueues on pdf_export queue" do
-    assert_equal "pdf_export", PdfExportJob.new.queue_name
-  end
 end

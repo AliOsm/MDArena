@@ -9,15 +9,20 @@ const content = page.props.content
 
 const toast = useToast()
 
-function downloadPdf() {
-  router.post(`/projects/${project.slug}/files/${path}/download_pdf`, {}, {
-    preserveScroll: true,
+function downloadMd() {
+  const blob = new Blob([content], { type: "text/markdown" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = path
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function deleteFile() {
+  router.delete(`/projects/${project.slug}/files/${path}`, {
     onSuccess: () => {
-      toast.add({
-        title: "PDF export started",
-        description: "You'll be notified when it's ready.",
-        color: "success",
-      })
+      toast.add({ title: "File deleted", color: "success" })
     },
   })
 }
@@ -56,15 +61,14 @@ function downloadPdf() {
         label="Download MD"
         variant="soft"
         color="neutral"
-        :href="`/projects/${project.slug}/files/${path}/download_md`"
-        tag="a"
+        @click="downloadMd"
       />
-      <UButton
-        icon="i-lucide-file-text"
-        label="Download PDF"
+<UButton
+        icon="i-lucide-trash-2"
+        label="Delete"
         variant="soft"
-        color="neutral"
-        @click="downloadPdf"
+        color="error"
+        @click="deleteFile"
       />
     </div>
 

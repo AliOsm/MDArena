@@ -13,11 +13,11 @@ const tokenName = ref("")
 const creating = ref(false)
 
 const columns = [
-  { key: "name", label: "Name" },
-  { key: "token", label: "Token" },
-  { key: "lastUsedAt", label: "Last Used" },
-  { key: "status", label: "Status" },
-  { key: "actions", label: "" },
+  { accessorKey: "name", header: "Name" },
+  { accessorKey: "tokenPrefix", header: "Token" },
+  { accessorKey: "lastUsedAt", header: "Last Used" },
+  { id: "status", header: "Status" },
+  { id: "actions" },
 ]
 
 function tokenStatus(token) {
@@ -76,37 +76,37 @@ function revokeToken(token) {
       class="mb-6"
     />
 
-    <UTable v-if="tokens.length" :columns="columns" :rows="tokens">
+    <UTable v-if="tokens.length" :columns="columns" :data="tokens">
       <template #name-cell="{ row }">
-        <span :class="{ 'text-gray-400 dark:text-gray-600': tokenStatus(row) !== 'active' }">
-          {{ row.name }}
+        <span :class="{ 'text-gray-400 dark:text-gray-600': tokenStatus(row.original) !== 'active' }">
+          {{ row.original.name }}
         </span>
       </template>
 
-      <template #token-cell="{ row }">
+      <template #tokenPrefix-cell="{ row }">
         <code
           class="rounded bg-gray-100 px-2 py-0.5 font-mono text-sm dark:bg-gray-800"
-          :class="{ 'text-gray-400 dark:text-gray-600': tokenStatus(row) !== 'active' }"
+          :class="{ 'text-gray-400 dark:text-gray-600': tokenStatus(row.original) !== 'active' }"
         >
-          {{ row.tokenPrefix }}........
+          {{ row.original.tokenPrefix }}........
         </code>
       </template>
 
       <template #lastUsedAt-cell="{ row }">
-        <span :class="{ 'text-gray-400 dark:text-gray-600': tokenStatus(row) !== 'active' }">
-          {{ formatDate(row.lastUsedAt) }}
+        <span :class="{ 'text-gray-400 dark:text-gray-600': tokenStatus(row.original) !== 'active' }">
+          {{ formatDate(row.original.lastUsedAt) }}
         </span>
       </template>
 
       <template #status-cell="{ row }">
         <UBadge
-          v-if="tokenStatus(row) === 'revoked'"
+          v-if="tokenStatus(row.original) === 'revoked'"
           label="Revoked"
           color="error"
           variant="subtle"
         />
         <UBadge
-          v-else-if="tokenStatus(row) === 'expired'"
+          v-else-if="tokenStatus(row.original) === 'expired'"
           label="Expired"
           color="warning"
           variant="subtle"
@@ -116,12 +116,12 @@ function revokeToken(token) {
 
       <template #actions-cell="{ row }">
         <UButton
-          v-if="tokenStatus(row) === 'active'"
+          v-if="tokenStatus(row.original) === 'active'"
           label="Revoke"
           color="error"
           variant="ghost"
           size="xs"
-          @click="revokeToken(row)"
+          @click="revokeToken(row.original)"
         />
       </template>
     </UTable>

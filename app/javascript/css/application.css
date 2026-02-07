@@ -1,4 +1,5 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@plugin "@tailwindcss/typography";
 
 @source "../**/*.{vue,js,ts}";

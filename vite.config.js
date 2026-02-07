@@ -9,6 +9,7 @@ export default defineConfig({
     vue(),
     ViteRuby(),
     ui({
+      inertia: true,
       ui: {
         colors: {
           primary: 'blue',

@@ -28,6 +28,10 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
     assert_response :redirect
     follow_redirect!
 
+    # Root redirects to projects
+    assert_response :redirect
+    follow_redirect!
+
     assert_response :success
   end
 

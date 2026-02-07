@@ -18,11 +18,11 @@ function formatDate(dateStr) {
 }
 
 const columns = [
-  { key: "sha", label: "Commit" },
-  { key: "message", label: "Message" },
-  { key: "author", label: "Author" },
-  { key: "time", label: "Date" },
-  { key: "actions", label: "" },
+  { accessorKey: "sha", header: "Commit" },
+  { accessorKey: "message", header: "Message" },
+  { accessorKey: "author", header: "Author" },
+  { accessorKey: "time", header: "Date" },
+  { id: "actions" },
 ]
 </script>
 
@@ -58,23 +58,23 @@ const columns = [
       />
     </div>
 
-    <UTable v-if="history.length" :columns="columns" :rows="history">
+    <UTable v-if="history.length" :columns="columns" :data="history">
       <template #sha-cell="{ row }">
         <UBadge variant="subtle" color="neutral">
-          <code class="font-mono text-xs">{{ row.sha.slice(0, 8) }}</code>
+          <code class="font-mono text-xs">{{ row.original.sha.slice(0, 8) }}</code>
         </UBadge>
       </template>
 
       <template #message-cell="{ row }">
-        {{ row.message }}
+        {{ row.original.message }}
       </template>
 
       <template #author-cell="{ row }">
-        {{ row.author.name }}
+        {{ row.original.author.name }}
       </template>
 
       <template #time-cell="{ row }">
-        {{ formatDate(row.time) }}
+        {{ formatDate(row.original.time) }}
       </template>
 
       <template #actions-cell="{ row }">
@@ -82,7 +82,7 @@ const columns = [
           label="View"
           variant="soft"
           size="xs"
-          @click="router.visit(`/projects/${project.slug}/files/${path}/history/${row.sha}`)"
+          @click="router.visit(`/projects/${project.slug}/files/${path}/history/${row.original.sha}`)"
         />
       </template>
     </UTable>

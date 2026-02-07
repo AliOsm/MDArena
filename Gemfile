@@ -17,9 +17,6 @@ gem "rugged"
 # Background jobs
 gem "good_job"
 
-# PDF generation
-gem "grover"
-
 # Markdown rendering
 gem "commonmarker"
 
