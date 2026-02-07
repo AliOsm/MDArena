@@ -28,17 +28,9 @@ const navItems = computed(() => [
     {
       label: "Settings",
       icon: "i-lucide-settings",
-      active: isActive("/settings") && !isActive("/settings/tokens"),
+      active: isActive("/settings"),
       onSelect() {
         router.visit("/settings")
-      },
-    },
-    {
-      label: "Tokens",
-      icon: "i-lucide-key",
-      active: isActive("/settings/tokens"),
-      onSelect() {
-        router.visit("/settings/tokens")
       },
     },
   ],

@@ -7,16 +7,13 @@ module Api
       rate_limit to: 60, within: 1.minute
 
       def show
-        email, token = extract_basic_auth_credentials
-        return head :unauthorized unless email && token
+        email, password = extract_basic_auth_credentials
+        return head :unauthorized unless email && password
 
         user = User.find_by(email: email)
         return head :unauthorized unless user
 
-        pat = PersonalAccessToken.authenticate(token)
-        return head :unauthorized unless pat&.user_id == user.id
-
-        pat.update_column(:last_used_at, Time.current)
+        return head :unauthorized unless user.valid_password?(password)
 
         project = find_project_from_uri
         return head :bad_request unless project
@@ -39,8 +36,8 @@ module Api
         return [ nil, nil ] unless auth_header&.start_with?("Basic ")
 
         decoded = Base64.decode64(auth_header.delete_prefix("Basic "))
-        email, token = decoded.split(":", 2)
-        [ email, token ]
+        email, password = decoded.split(":", 2)
+        [ email, password ]
       end
 
       def find_project_from_uri

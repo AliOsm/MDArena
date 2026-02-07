@@ -7,11 +7,6 @@ Rails.application.configure do
   config.good_job.enable_cron = true
 
   config.good_job.cron = {
-    cleanup_expired_tokens: {
-      cron: "0 3 * * *",
-      class: "CleanupExpiredTokensJob",
-      description: "Daily cleanup of expired and long-revoked personal access tokens"
-    },
     cleanup_stale_ydocs: {
       cron: "*/15 * * * *",
       class: "CleanupStaleYdocsJob",

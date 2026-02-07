@@ -100,13 +100,7 @@ function copyCloneUrl() {
         />
       </div>
       <p class="mt-1.5 text-xs text-(--ui-text-dimmed)">
-        Use your email as username and a
-        <a
-          href="/settings/tokens"
-          class="text-(--ui-primary) hover:underline"
-          @click.prevent="router.visit('/settings/tokens')"
-        >personal access token</a>
-        as password when prompted.
+        Use your email as username and your account password when prompted.
       </p>
     </div>
 

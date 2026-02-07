@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_06_183819) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_07_133505) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -144,20 +144,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_06_183819) do
     t.index ["scheduled_at"], name: "index_good_jobs_on_scheduled_at", where: "(finished_at IS NULL)"
   end
 
-  create_table "personal_access_tokens", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "expires_at"
-    t.datetime "last_used_at"
-    t.string "name", null: false
-    t.datetime "revoked_at"
-    t.string "token_digest", null: false
-    t.string "token_prefix", limit: 8
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["token_digest"], name: "index_personal_access_tokens_on_token_digest", unique: true
-    t.index ["user_id"], name: "index_personal_access_tokens_on_user_id"
-  end
-
   create_table "project_memberships", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "project_id", null: false
@@ -198,7 +184,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_06_183819) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "documents", "projects"
-  add_foreign_key "personal_access_tokens", "users"
   add_foreign_key "project_memberships", "projects"
   add_foreign_key "project_memberships", "users"
   add_foreign_key "projects", "users", column: "owner_id"
