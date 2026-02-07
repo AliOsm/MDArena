@@ -16,7 +16,6 @@ const page = usePage()
 const project = page.props.project
 const path = page.props.path
 const initialContent = page.props.content
-const headSha = page.props.headSha
 const toast = useToast()
 
 const editorContainer = ref(null)
@@ -25,7 +24,9 @@ const previewVisible = ref(true)
 const saving = ref(false)
 const connectionStatus = ref("connecting")
 const editorContent = ref(initialContent || "")
-const fileChangedExternally = ref(false)
+
+let pendingSave = false
+let pendingSaveTimer = null
 
 const wordCount = computed(() => {
   const text = editorContent.value.trim()
@@ -141,16 +142,14 @@ onMounted(() => {
           toast.add({ title: "File saved", color: "success" })
         } else if (data.type === "file_changed") {
           if (pendingSave) {
-            // This change was triggered by our own save — ignore it
             pendingSave = false
           } else {
-            fileChangedExternally.value = true
+            clearAutoSaveTimer()
             toast.add({
-              title: "File changed externally",
-              description:
-                "This file was changed outside the editor. Please refresh to get the latest version.",
+              title: "File updated externally, reloading...",
               color: "warning",
             })
+            router.visit(`/projects/${project.slug}/files/${path}/edit`)
           }
         }
       },
@@ -171,9 +170,6 @@ onBeforeUnmount(() => {
   }
   ydoc.destroy()
 })
-
-let pendingSave = false
-let pendingSaveTimer = null
 
 function save() {
   if (!subscription) return
@@ -245,24 +241,6 @@ function save() {
         </div>
       </div>
     </div>
-
-    <!-- External change alert -->
-    <UAlert
-      v-if="fileChangedExternally"
-      color="warning"
-      icon="i-lucide-alert-triangle"
-      title="This file was changed outside the editor. Please refresh to get the latest version."
-    >
-      <template #actions>
-        <UButton
-          label="Refresh"
-          color="warning"
-          variant="soft"
-          size="xs"
-          @click="router.visit(`/projects/${project.slug}/files/${path}/edit`)"
-        />
-      </template>
-    </UAlert>
 
     <!-- Split pane editor/preview -->
     <UDashboardGroup storage-key="editor-split" class="flex-1 min-h-0">
