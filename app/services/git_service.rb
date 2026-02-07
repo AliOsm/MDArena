@@ -11,6 +11,7 @@ class GitService
   def self.init_repo(project)
     repo = Rugged::Repository.init_at(repo_path(project), :bare)
     repo.head = "refs/heads/main"
+    repo.config["http.receivepack"] = "true"
     repo
   end
 

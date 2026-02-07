@@ -28,6 +28,7 @@ module Api
           return head :forbidden unless membership.role.in?(%w[owner editor])
         end
 
+        response.headers["X-Repo-UUID"] = project.uuid
         head :ok
       end
 

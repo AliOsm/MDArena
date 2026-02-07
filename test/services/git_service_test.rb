@@ -27,6 +27,13 @@ class GitServiceTest < ActiveSupport::TestCase
     assert Dir.exist?(@repo_path)
   end
 
+  test "init_repo enables http.receivepack" do
+    GitService.init_repo(@project)
+    repo = Rugged::Repository.new(@repo_path)
+
+    assert_equal "true", repo.config["http.receivepack"]
+  end
+
   test "commit_file creates a commit with file content" do
     GitService.init_repo(@project)
     sha = GitService.commit_file(

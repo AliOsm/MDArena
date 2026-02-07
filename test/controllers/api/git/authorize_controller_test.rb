@@ -19,6 +19,12 @@ class Api::Git::AuthorizeControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
+  test "returns X-Repo-UUID header on successful auth" do
+    get api_git_authorize_path, headers: auth_headers(@alice.email, @plain_token, read_uri(@alpha.slug))
+
+    assert_equal @alpha.uuid, response.headers["X-Repo-UUID"]
+  end
+
   test "returns 401 when no authorization header" do
     get api_git_authorize_path, headers: { "X-Original-URI" => "/git/#{@alpha.slug}.git/info/refs" }
 
