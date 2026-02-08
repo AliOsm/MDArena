@@ -22,6 +22,11 @@ Rails.application.configure do
   config.consider_all_requests_local = true
   config.cache_store = :memory_store
 
+  # Use a per-worker repos root so parallel tests don't fight over the same bare git repos.
+  test_env_number = ENV["TEST_ENV_NUMBER"].to_s
+  repos_root_suffix = test_env_number.empty? ? "" : test_env_number
+  config.repos_root = ENV.fetch("GIT_REPOS_ROOT", Rails.root.join("tmp", "repos-test#{repos_root_suffix}").to_s)
+
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable
 

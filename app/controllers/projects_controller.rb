@@ -28,13 +28,19 @@ class ProjectsController < ApplicationController
   def create
     project = Project.new(name: params[:name], slug: params[:name].to_s.parameterize, owner: current_user)
 
-    if project.save
+    Project.transaction do
+      project.save!
       ProjectMembership.create!(user: current_user, project: project, role: "owner")
       GitService.init_repo(project)
-      redirect_to project_path(project.slug), notice: "Project created."
-    else
-      redirect_back fallback_location: projects_path, inertia: { errors: project.errors.to_hash }
     end
+
+    redirect_to project_path(project.slug), notice: "Project created."
+  rescue ActiveRecord::RecordInvalid
+    redirect_back fallback_location: projects_path, inertia: { errors: project.errors.to_hash }
+  rescue StandardError
+    # Rollback can't undo filesystem side effects.
+    GitService.delete_repo(project)
+    redirect_back fallback_location: projects_path, alert: "Failed to create project."
   end
 
   private

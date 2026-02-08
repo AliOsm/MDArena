@@ -97,7 +97,7 @@ class DocumentChannelTest < ActionCable::Channel::TestCase
     assert_kind_of Array, cached
   end
 
-  test "uses cached state on subsequent subscriptions" do
+  test "refreshes cached state on subsequent subscriptions when HEAD changes" do
     # First subscription populates cache
     subscribe(project_id: @project.id, file_path: @file_path)
     unsubscribe
@@ -111,7 +111,7 @@ class DocumentChannelTest < ActionCable::Channel::TestCase
       message: "Update"
     )
 
-    # Second subscription should use cached state (not re-read from Git)
+    # Second subscription should refresh from Git because HEAD has changed
     subscribe(project_id: @project.id, file_path: @file_path)
     transmitted = transmissions.last
     state_bytes = Base64.strict_decode64(transmitted["state"]).unpack("C*")
@@ -119,7 +119,7 @@ class DocumentChannelTest < ActionCable::Channel::TestCase
     doc.sync(state_bytes)
     text = doc.get_text("content")
 
-    assert_equal "# Hello", text.to_s
+    assert_equal "# Updated", text.to_s
   end
 
   test "update message applies to cached state and broadcasts" do

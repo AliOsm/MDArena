@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from "vue"
 import { router, usePage } from "@inertiajs/vue3"
+import { encodePath } from "@/lib/url.js"
 
 const page = usePage()
 const project = page.props.project
@@ -111,7 +112,7 @@ function copyCloneUrl() {
         v-for="file in files"
         :key="file"
         class="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-(--ui-bg-elevated)"
-        @click="router.visit(`/projects/${project.slug}/files/${file}`)"
+        @click="router.visit(`/projects/${project.slug}/files/${encodePath(file)}`)"
       >
         <UIcon name="i-lucide-file-text" class="size-4 shrink-0 text-(--ui-text-muted)" />
         <span class="flex-1 text-sm font-medium">{{ file }}</span>

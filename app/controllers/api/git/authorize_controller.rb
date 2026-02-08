@@ -18,10 +18,10 @@ module Api
         project = find_project_from_uri
         return head :bad_request unless project
 
-        return head :forbidden unless project.users.include?(user)
+        membership = project.memberships.find_by(user: user)
+        return head :forbidden unless membership
 
         if push_request?
-          membership = project.memberships.find_by(user: user)
           return head :forbidden unless membership.role.in?(%w[owner editor])
         end
 

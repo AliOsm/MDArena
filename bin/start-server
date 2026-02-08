@@ -9,16 +9,22 @@ PUMA_PID=$!
 
 # Trap SIGTERM to cleanly shut down child processes
 cleanup() {
-  kill "$PUMA_PID" 2>/dev/null
-  [ -f /tmp/nginx/fcgiwrap.pid ] && kill "$(cat /tmp/nginx/fcgiwrap.pid)" 2>/dev/null
-  wait "$PUMA_PID" 2>/dev/null
-  exit 0
-}
-trap cleanup SIGTERM SIGINT
+  [ -n "${NGINX_PID:-}" ] && kill "$NGINX_PID" 2>/dev/null || true
+  kill "$PUMA_PID" 2>/dev/null || true
+  [ -f /tmp/nginx/fcgiwrap.pid ] && kill "$(cat /tmp/nginx/fcgiwrap.pid)" 2>/dev/null || true
 
-# Start nginx in the foreground
+  [ -n "${NGINX_PID:-}" ] && wait "$NGINX_PID" 2>/dev/null || true
+  wait "$PUMA_PID" 2>/dev/null || true
+}
+trap 'cleanup; exit 0' SIGTERM SIGINT
+
+# Start nginx in the background
 nginx -g 'daemon off;' &
 NGINX_PID=$!
 
-# Wait for nginx — if any process dies, the container stops
-wait $NGINX_PID
+# If any process dies, stop the container.
+wait -n "$NGINX_PID" "$PUMA_PID"
+status=$?
+
+cleanup
+exit "$status"

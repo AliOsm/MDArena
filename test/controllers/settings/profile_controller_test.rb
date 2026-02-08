@@ -20,10 +20,19 @@ class Settings::ProfileControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update changes user email" do
-    patch settings_profile_path, params: { name: @user.name, email: "newalice@example.com" }
+    patch settings_profile_path, params: { name: @user.name, email: "newalice@example.com", current_password: "password123" }
 
     assert_redirected_to settings_profile_path
     assert_equal "newalice@example.com", @user.reload.email
+  end
+
+  test "update with email change requires current password" do
+    original_email = @user.email
+
+    patch settings_profile_path, params: { name: @user.name, email: "newalice@example.com" }
+
+    assert_redirected_to settings_profile_path
+    assert_equal original_email, @user.reload.email
   end
 
   test "update with password change requires current password" do

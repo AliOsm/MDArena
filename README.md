@@ -7,6 +7,7 @@ MDArena gives teams a shared workspace for Markdown files where multiple people 
 ## Table of Contents
 
 - [Features](#features)
+- [Roadmap](#roadmap)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
@@ -31,6 +32,16 @@ MDArena gives teams a shared workspace for Markdown files where multiple people 
 **Auto-save** -- Changes are automatically committed to Git after 60 seconds of inactivity. No work is lost even if you forget to save.
 
 **Mobile-friendly** -- Responsive layout with a collapsible sidebar, stacking forms, and scrollable tables. The editor hides the preview pane on small screens to maximize editing space.
+
+## Roadmap
+
+Planned next features:
+
+- **Delete projects** -- Allow project owners to delete a project and its bare Git repository (with a safety confirmation).
+- **Inline highlights + comments** -- Highlight text ranges and start comment threads anchored to the selected content.
+- **File-level comments** -- A general comment thread under each file (not tied to a specific highlight).
+- **@mentions in comments** -- Mention project members with autocomplete and notifications.
+- **Full-text search** -- Search across files in a project by filename and content.
 
 ## Architecture
 
@@ -98,7 +109,7 @@ mise install
 mise run dev
 ```
 
-This single command starts everything: PostgreSQL, the Git HTTP server (Nginx), the Rails server, the Vite dev server, and the GoodJob worker.
+This single command starts everything: PostgreSQL, the Git HTTP server (Nginx), the Rails server, the Vite dev server, and background jobs (GoodJob).
 
 Once running, visit:
 
@@ -128,13 +139,14 @@ bin/dev
 
 ### Running Services
 
-The development environment runs three processes via Foreman (`bin/dev`):
+The development environment runs two processes via Foreman (`bin/dev`):
 
 | Process | Port | Purpose |
 |---|---|---|
 | Rails server | 3001 | Backend API and Inertia page rendering |
 | Vite dev server | 3036 | Frontend asset compilation with HMR |
-| GoodJob | -- | Background job processing |
+
+By default, jobs run in-process in development (`GOOD_JOB_EXECUTION_MODE=async`). If you want an external worker, set `GOOD_JOB_EXECUTION_MODE=external` and run `bundle exec good_job start`.
 
 Two Docker containers run alongside:
 

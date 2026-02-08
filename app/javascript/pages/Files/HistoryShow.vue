@@ -1,12 +1,16 @@
 <script setup>
+import { computed } from "vue"
 import { usePage, router } from "@inertiajs/vue3"
 import MarkdownPreview from "@/components/MarkdownPreview.vue"
+import { encodePath } from "@/lib/url.js"
 
 const page = usePage()
 const project = page.props.project
 const path = page.props.path
 const sha = page.props.sha
 const content = page.props.content
+
+const encodedPath = computed(() => encodePath(path))
 </script>
 
 <template>
@@ -23,14 +27,14 @@ const content = page.props.content
       <UButton
         variant="link"
         :label="path"
-        @click="router.visit(`/projects/${project.slug}/files/${path}`)"
+        @click="router.visit(`/projects/${project.slug}/files/${encodedPath}`)"
         class="p-0"
       />
       <UIcon name="i-lucide-chevron-right" class="size-3.5" />
       <UButton
         variant="link"
         label="History"
-        @click="router.visit(`/projects/${project.slug}/files/${path}/history`)"
+        @click="router.visit(`/projects/${project.slug}/files/${encodedPath}/history`)"
         class="p-0"
       />
       <UIcon name="i-lucide-chevron-right" class="size-3.5" />
@@ -43,7 +47,7 @@ const content = page.props.content
         label="Back to history"
         variant="soft"
         color="neutral"
-        @click="router.visit(`/projects/${project.slug}/files/${path}/history`)"
+        @click="router.visit(`/projects/${project.slug}/files/${encodedPath}/history`)"
       />
       <UBadge variant="subtle" color="neutral">
         <code class="font-mono text-xs">{{ sha.slice(0, 8) }}</code>

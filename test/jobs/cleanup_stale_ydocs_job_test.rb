@@ -6,6 +6,7 @@ class CleanupStaleYdocsJobTest < ActiveSupport::TestCase
     @user = users(:alice)
     @file_path = "readme.md"
     @cache_key = "ydoc:#{@project.id}:#{@file_path}"
+    @active_count_key = "ydoc_active_count:#{@project.id}:#{@file_path}"
 
     GitService.init_repo(@project)
 
@@ -25,9 +26,9 @@ class CleanupStaleYdocsJobTest < ActiveSupport::TestCase
     text.insert(0, "stale content")
     Rails.cache.write(@cache_key, doc.full_diff, expires_in: 2.hours)
 
-    # Register it in the all_ydoc_keys registry but NOT in active_ydocs
+    # Register it in the all_ydoc_keys registry but do not mark it as active.
     Rails.cache.write("all_ydoc_keys", Set.new([ @cache_key ]))
-    Rails.cache.write("active_ydocs", Set.new)
+    Rails.cache.delete(@active_count_key)
 
     CleanupStaleYdocsJob.perform_now
 
@@ -50,7 +51,7 @@ class CleanupStaleYdocsJobTest < ActiveSupport::TestCase
 
     # Register it as active
     Rails.cache.write("all_ydoc_keys", Set.new([ @cache_key ]))
-    Rails.cache.write("active_ydocs", Set.new([ @cache_key ]))
+    Rails.cache.write(@active_count_key, 1)
 
     CleanupStaleYdocsJob.perform_now
 
@@ -63,9 +64,10 @@ class CleanupStaleYdocsJobTest < ActiveSupport::TestCase
     doc.get_text("content").insert(0, "cleanup me")
     Rails.cache.write(@cache_key, doc.full_diff, expires_in: 2.hours)
     active_key = "ydoc:#{@project.id}:active.md"
+    active_count_key = "ydoc_active_count:#{@project.id}:active.md"
 
     Rails.cache.write("all_ydoc_keys", Set.new([ @cache_key, active_key ]))
-    Rails.cache.write("active_ydocs", Set.new([ active_key ]))
+    Rails.cache.write(active_count_key, 1)
 
     CleanupStaleYdocsJob.perform_now
 

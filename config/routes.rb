@@ -26,7 +26,7 @@ Rails.application.routes.draw do
     get "files/*path/edit", to: "files#edit", as: :edit_file
     get "files/*path/history/:sha", to: "file_history#show", as: :file_history_show
     get "files/*path/history", to: "file_history#index", as: :file_history
-get "files/*path", to: "files#show", as: :file
+    get "files/*path", to: "files#show", as: :file
     patch "files/*path", to: "files#update"
     delete "files/*path", to: "files#destroy", as: :destroy_file
   end

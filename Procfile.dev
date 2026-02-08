@@ -1,3 +1,2 @@
 web: bin/rails server -p 3001
 js: yarn vite dev
-jobs: bundle exec good_job start

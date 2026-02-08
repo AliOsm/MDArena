@@ -1,5 +1,5 @@
 Rails.application.configure do
-  config.good_job.execution_mode = :async
+  config.good_job.execution_mode = ENV.fetch("GOOD_JOB_EXECUTION_MODE", "async").to_sym
   config.good_job.queues = "default:5"
   config.good_job.max_threads = 5
   config.good_job.poll_interval = 5

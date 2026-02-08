@@ -19,8 +19,13 @@ function updateProfile() {
   saving.value = true
   const data = { name: name.value, email: email.value }
 
-  if (password.value) {
+  const emailChanged = email.value !== user.value.email
+
+  if (password.value || emailChanged) {
     data.current_password = currentPassword.value
+  }
+
+  if (password.value) {
     data.password = password.value
     data.password_confirmation = passwordConfirmation.value
   }

@@ -1,18 +1,39 @@
 class GitService
-  REPOS_ROOT = Rails.configuration.repos_root
-
   class StaleCommitError < StandardError; end
   class FileNotFoundError < StandardError; end
 
+  def self.repos_root
+    Rails.configuration.repos_root
+  end
+
+  def self.repo_path_for_uuid(uuid)
+    File.join(repos_root, "#{uuid}.git")
+  end
+
   def self.repo_path(project)
-    File.join(REPOS_ROOT, "#{project.uuid}.git")
+    repo_path_for_uuid(project.uuid)
   end
 
   def self.init_repo(project)
-    repo = Rugged::Repository.init_at(repo_path(project), :bare)
+    path = repo_path(project)
+    FileUtils.mkdir_p(File.dirname(path))
+
+    repo = Rugged::Repository.init_at(path, :bare)
     repo.head = "refs/heads/main"
     repo.config["http.receivepack"] = "true"
     repo
+  end
+
+  def self.delete_repo(project)
+    return unless project&.uuid.present?
+
+    root = File.expand_path(repos_root)
+    path = File.expand_path(repo_path(project))
+
+    # Defense in depth: avoid deleting anything outside the configured repo root.
+    return unless path.start_with?(root.end_with?(File::SEPARATOR) ? root : (root + File::SEPARATOR))
+
+    FileUtils.rm_rf(path)
   end
 
   def self.with_repo_lock(project)
@@ -31,6 +52,8 @@ class GitService
     tree = commit.tree
     entry = tree.path(path)
     repo.lookup(entry[:oid]).content
+  rescue Rugged::RepositoryError
+    raise FileNotFoundError, "Repository not found"
   rescue Rugged::TreeError
     raise FileNotFoundError, "File not found: #{path}"
   rescue Rugged::ReferenceError
@@ -68,6 +91,8 @@ class GitService
 
       commit_oid
     end
+  rescue Rugged::RepositoryError
+    raise FileNotFoundError, "Repository not found"
   end
 
   def self.list_files(project, ref: "HEAD")
@@ -76,6 +101,8 @@ class GitService
     files = []
     commit.tree.walk_blobs { |root, entry| files << "#{root}#{entry[:name]}" }
     files
+  rescue Rugged::RepositoryError
+    []
   rescue Rugged::ReferenceError
     []
   end
@@ -107,6 +134,8 @@ class GitService
     end
 
     commits
+  rescue Rugged::RepositoryError
+    []
   end
 
   def self.delete_file(project:, path:, user:, message:)
@@ -137,6 +166,8 @@ class GitService
         parents: [ ref.target ],
         update_ref: "refs/heads/main")
     end
+  rescue Rugged::RepositoryError
+    raise FileNotFoundError, "Repository not found"
   end
 
   def self.file_content_at(project, path, sha)
@@ -144,6 +175,8 @@ class GitService
     commit = repo.lookup(sha)
     entry = commit.tree.path(path)
     repo.lookup(entry[:oid]).content
+  rescue Rugged::RepositoryError
+    raise FileNotFoundError, "Repository not found"
   rescue Rugged::TreeError
     raise FileNotFoundError, "File not found: #{path} at #{sha}"
   rescue Rugged::OdbError, Rugged::InvalidError

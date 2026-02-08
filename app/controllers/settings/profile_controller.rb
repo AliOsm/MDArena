@@ -7,7 +7,7 @@ module Settings
     end
 
     def update
-      if needs_password_change?
+      if needs_password_validation?
         success = current_user.update_with_password(profile_params)
       else
         success = current_user.update(profile_params.except(:current_password, :password, :password_confirmation))
@@ -36,6 +36,14 @@ module Settings
 
     def needs_password_change?
       params[:password].present?
+    end
+
+    def needs_password_validation?
+      needs_password_change? || email_changed?
+    end
+
+    def email_changed?
+      params[:email].present? && params[:email] != current_user.email
     end
   end
 end

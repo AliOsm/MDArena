@@ -1,10 +1,14 @@
 <script setup>
+import { computed } from "vue"
 import { usePage, router } from "@inertiajs/vue3"
+import { encodePath } from "@/lib/url.js"
 
 const page = usePage()
 const project = page.props.project
 const path = page.props.path
 const history = page.props.history || []
+
+const encodedPath = computed(() => encodePath(path))
 
 function formatDate(dateStr) {
   if (!dateStr) return ""
@@ -40,7 +44,7 @@ const columns = [
       <UButton
         variant="link"
         :label="path"
-        @click="router.visit(`/projects/${project.slug}/files/${path}`)"
+        @click="router.visit(`/projects/${project.slug}/files/${encodedPath}`)"
         class="p-0"
       />
       <UIcon name="i-lucide-chevron-right" class="size-3.5" />
@@ -53,7 +57,7 @@ const columns = [
         label="Back to file"
         variant="soft"
         color="neutral"
-        @click="router.visit(`/projects/${project.slug}/files/${path}`)"
+        @click="router.visit(`/projects/${project.slug}/files/${encodedPath}`)"
       />
     </div>
 
@@ -83,7 +87,7 @@ const columns = [
             label="View"
             variant="soft"
             size="xs"
-            @click="router.visit(`/projects/${project.slug}/files/${path}/history/${row.original.sha}`)"
+            @click="router.visit(`/projects/${project.slug}/files/${encodedPath}/history/${row.original.sha}`)"
           />
         </template>
       </UTable>

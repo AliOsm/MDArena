@@ -1,11 +1,15 @@
 <script setup>
+import { computed } from "vue"
 import { usePage, router } from "@inertiajs/vue3"
 import MarkdownPreview from "@/components/MarkdownPreview.vue"
+import { encodePath } from "@/lib/url.js"
 
 const page = usePage()
 const project = page.props.project
 const path = page.props.path
 const content = page.props.content
+
+const encodedPath = computed(() => encodePath(path))
 
 const toast = useToast()
 
@@ -20,7 +24,7 @@ function downloadMd() {
 }
 
 function deleteFile() {
-  router.delete(`/projects/${project.slug}/files/${path}`, {
+  router.delete(`/projects/${project.slug}/files/${encodedPath.value}`, {
     onSuccess: () => {
       toast.add({ title: "File deleted", color: "success" })
     },
@@ -47,14 +51,14 @@ function deleteFile() {
       <UButton
         icon="i-lucide-pencil"
         label="Edit"
-        @click="router.visit(`/projects/${project.slug}/files/${path}/edit`)"
+        @click="router.visit(`/projects/${project.slug}/files/${encodedPath}/edit`)"
       />
       <UButton
         icon="i-lucide-history"
         label="History"
         variant="soft"
         color="neutral"
-        @click="router.visit(`/projects/${project.slug}/files/${path}/history`)"
+        @click="router.visit(`/projects/${project.slug}/files/${encodedPath}/history`)"
       />
       <UButton
         icon="i-lucide-download"

@@ -10,6 +10,7 @@ import { Awareness, encodeAwarenessUpdate, applyAwarenessUpdate } from "y-protoc
 import { createConsumer } from "@rails/actioncable"
 import MarkdownPreview from "@/components/MarkdownPreview.vue"
 import EditorLayout from "@/layouts/EditorLayout.vue"
+import { encodePath } from "@/lib/url.js"
 
 defineOptions({ layout: EditorLayout })
 
@@ -18,6 +19,8 @@ const project = page.props.project
 const path = page.props.path
 const initialContent = page.props.content
 const toast = useToast()
+
+const encodedPath = computed(() => encodePath(path))
 
 const editorContainer = ref(null)
 const editorView = shallowRef(null)
@@ -142,10 +145,28 @@ awareness.on("change", () => {
   activeUsers.value = users
 })
 
+function uint8ToBase64(bytes) {
+  let binary = ""
+  const chunkSize = 0x8000
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+  }
+  return btoa(binary)
+}
+
+function base64ToUint8(base64) {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
+}
+
 function broadcastAwareness() {
   if (!subscription) return
   const update = encodeAwarenessUpdate(awareness, [ydoc.clientID])
-  const base64 = btoa(String.fromCharCode(...update))
+  const base64 = uint8ToBase64(update)
   subscription.send({ type: "awareness", update: base64, sender: String(ydoc.clientID) })
 }
 
@@ -162,18 +183,18 @@ let subscription = null
 const consumer = createConsumer()
 
 function applyRemoteUpdate(base64Update) {
-  const bytes = Uint8Array.from(atob(base64Update), (c) => c.charCodeAt(0))
+  const bytes = base64ToUint8(base64Update)
   Y.applyUpdate(ydoc, bytes)
 }
 
 function applyRemoteState(base64State) {
-  const bytes = Uint8Array.from(atob(base64State), (c) => c.charCodeAt(0))
+  const bytes = base64ToUint8(base64State)
   Y.applyUpdate(ydoc, bytes)
 }
 
 function sendUpdate(update) {
   if (!subscription) return
-  const base64 = btoa(String.fromCharCode(...update))
+  const base64 = uint8ToBase64(update)
   subscription.send({ type: "update", update: base64, sender: String(ydoc.clientID) })
 }
 
@@ -262,7 +283,7 @@ onMounted(() => {
           }
         } else if (data.type === "awareness") {
           if (String(data.sender) !== String(ydoc.clientID)) {
-            const bytes = Uint8Array.from(atob(data.update), (c) => c.charCodeAt(0))
+            const bytes = base64ToUint8(data.update)
             applyAwarenessUpdate(awareness, bytes, "remote")
           }
         } else if (data.type === "saved") {
@@ -277,7 +298,7 @@ onMounted(() => {
               title: "File updated externally, reloading...",
               color: "warning",
             })
-            router.visit(`/projects/${project.slug}/files/${path}/edit`)
+            router.visit(`/projects/${project.slug}/files/${encodedPath.value}/edit`)
           }
         }
       },
@@ -326,7 +347,7 @@ function save() {
       size="xs"
       variant="ghost"
       color="neutral"
-      @click="router.visit(`/projects/${project.slug}/files/${path}`)"
+      @click="router.visit(`/projects/${project.slug}/files/${encodedPath}`)"
     />
 
     <USeparator orientation="vertical" class="h-5" />

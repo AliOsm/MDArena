@@ -11,8 +11,8 @@ class GoodJobConfigurationTest < ActiveSupport::TestCase
   end
 
   test "a job can be enqueued" do
-    assert_enqueued_with(job: CleanupExpiredTokensJob) do
-      CleanupExpiredTokensJob.perform_later
+    assert_enqueued_with(job: CleanupStaleYdocsJob) do
+      CleanupStaleYdocsJob.perform_later
     end
   end
 end
